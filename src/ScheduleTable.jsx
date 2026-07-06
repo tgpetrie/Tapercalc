@@ -1,10 +1,8 @@
 import React from 'react';
-import { formatNumber, downloadAsCSV } from './utils/taperMath';
+import { formatNumber, downloadAsCSV } from './utils/taperEngine';
 
 export default function ScheduleTable({ schedule, doseLabels }) {
-  if (!schedule || schedule.length === 0) {
-    return null;
-  }
+  if (!schedule || schedule.length === 0) return null;
 
   const handleExport = () => {
     downloadAsCSV(schedule, doseLabels, 'taper-schedule.csv');
@@ -21,12 +19,8 @@ export default function ScheduleTable({ schedule, doseLabels }) {
       <div className="panel-header">
         <h2 className="panel-title">Generated Schedule</h2>
         <div className="action-buttons">
-          <button onClick={handleExport} className="btn-secondary">
-            Export CSV
-          </button>
-          <button onClick={handlePrint} className="btn-secondary">
-            Print
-          </button>
+          <button onClick={handleExport} className="btn-secondary">Export CSV</button>
+          <button onClick={handlePrint} className="btn-secondary">Print</button>
         </div>
       </div>
       <div className="table-wrapper">
@@ -35,7 +29,7 @@ export default function ScheduleTable({ schedule, doseLabels }) {
             <tr>
               <th>Day</th>
               {hasDate && <th>Date</th>}
-              {hasDate && <th>Day</th>}
+              {hasDate && <th>Weekday</th>}
               <th>Step</th>
               {doseLabels.map((label, i) => (
                 <th key={`tablet-${i}`} className="dose-header">{label} Tablet (mg)</th>
@@ -75,8 +69,7 @@ export default function ScheduleTable({ schedule, doseLabels }) {
                 <td>
                   <span className={`status-badge status-${item.status}`}>
                     {item.status === 'tapering' ? 'Tapering' :
-                     item.status === 'hold' ? 'Hold' :
-                     'Target'}
+                     item.status === 'hold' ? 'Hold' : 'Target'}
                   </span>
                 </td>
                 <td className="notes-cell">{item.note || ''}</td>

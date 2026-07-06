@@ -1,5 +1,5 @@
 import React from 'react';
-import { totalDailyDose, formatNumber } from '../utils/taperMath';
+import { totalDailyDose, formatNumber } from '../utils/taperEngine';
 
 const DEFAULT_DOSE_LABELS = ['Morning', 'Afternoon', 'Evening', 'Bedtime'];
 
@@ -10,6 +10,8 @@ function makeDose(idx) {
     tabletMg: '',
     liquidMl: '',
     mgPerMl: 1,
+    time: '',
+    notes: '',
   };
 }
 
@@ -62,6 +64,14 @@ export default function DoseEditor({ doses, doseCount, onChange }) {
     onChange({ doses: newDoses });
   };
 
+  const handleMoveDose = (idx, direction) => {
+    const newIdx = idx + direction;
+    if (newIdx < 0 || newIdx >= doses.length) return;
+    const newDoses = [...doses];
+    [newDoses[idx], newDoses[newIdx]] = [newDoses[newIdx], newDoses[idx]];
+    onChange({ doses: newDoses });
+  };
+
   const currentTotal = totalDailyDose(doses);
 
   return (
@@ -73,11 +83,7 @@ export default function DoseEditor({ doses, doseCount, onChange }) {
 
       <div className="input-row">
         <label htmlFor="doseCount">Number of Daily Doses</label>
-        <select
-          id="doseCount"
-          value={doseCount}
-          onChange={handlePresetChange}
-        >
+        <select id="doseCount" value={doseCount} onChange={handlePresetChange}>
           <option value="1">1 dose</option>
           <option value="2">2 doses</option>
           <option value="3">3 doses</option>
@@ -105,7 +111,29 @@ export default function DoseEditor({ doses, doseCount, onChange }) {
         {doses.map((dose, idx) => (
           <div key={dose.id} className="dose-card">
             <div className="dose-card-header">
-              <span className="dose-number">Dose {idx + 1}</span>
+              <div className="dose-card-header-left">
+                <span className="dose-number">Dose {idx + 1}</span>
+                <div className="dose-reorder">
+                  <button
+                    type="button"
+                    className="btn-reorder"
+                    onClick={() => handleMoveDose(idx, -1)}
+                    disabled={idx === 0}
+                    aria-label="Move dose up"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-reorder"
+                    onClick={() => handleMoveDose(idx, 1)}
+                    disabled={idx === doses.length - 1}
+                    aria-label="Move dose down"
+                  >
+                    ↓
+                  </button>
+                </div>
+              </div>
               {doses.length > 1 && (
                 <button
                   type="button"
@@ -125,6 +153,14 @@ export default function DoseEditor({ doses, doseCount, onChange }) {
                   value={dose.label}
                   onChange={(e) => handleDoseChange(dose.id, 'label', e.target.value)}
                   placeholder="e.g. Morning"
+                />
+              </div>
+              <div className="dose-field">
+                <label>Time</label>
+                <input
+                  type="time"
+                  value={dose.time || ''}
+                  onChange={(e) => handleDoseChange(dose.id, 'time', e.target.value)}
                 />
               </div>
               <div className="dose-field">
@@ -157,6 +193,15 @@ export default function DoseEditor({ doses, doseCount, onChange }) {
                   onChange={(e) => handleDoseChange(dose.id, 'mgPerMl', e.target.value)}
                   min="0.1"
                   step="0.1"
+                />
+              </div>
+              <div className="dose-field dose-field-notes">
+                <label>Notes</label>
+                <input
+                  type="text"
+                  value={dose.notes || ''}
+                  onChange={(e) => handleDoseChange(dose.id, 'notes', e.target.value)}
+                  placeholder="Optional"
                 />
               </div>
             </div>

@@ -28,10 +28,9 @@ export function getSavedPlans() {
  */
 export function savePlan(name, data) {
   const plans = getSavedPlans();
-  const id = `plan-${Date.now()}`;
+  const id = `plan-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const plan = { id, name, data, savedAt: new Date().toISOString() };
 
-  // Check if a plan with the same name exists — overwrite it
   const existingIdx = plans.findIndex(p => p.name === name);
   if (existingIdx >= 0) {
     plan.id = plans[existingIdx].id;
@@ -63,4 +62,41 @@ export function loadPlan(id) {
   const plans = getSavedPlans();
   const plan = plans.find(p => p.id === id);
   return plan ? plan.data : null;
+}
+
+/**
+ * Rename a plan by id.
+ * @param {string} id - Plan id to rename
+ * @param {string} newName - New plan name
+ * @returns {Object|null} The updated plan or null if not found
+ */
+export function renamePlan(id, newName) {
+  const plans = getSavedPlans();
+  const plan = plans.find(p => p.id === id);
+  if (!plan) return null;
+  plan.name = newName;
+  plan.savedAt = new Date().toISOString();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(plans));
+  return plan;
+}
+
+/**
+ * Duplicate a plan by id, creating a copy with a new name.
+ * @param {string} id - Plan id to duplicate
+ * @param {string} newName - Name for the duplicated plan
+ * @returns {Object|null} The duplicated plan or null if original not found
+ */
+export function duplicatePlan(id, newName) {
+  const plans = getSavedPlans();
+  const original = plans.find(p => p.id === id);
+  if (!original) return null;
+  const newPlan = {
+    id: `plan-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    name: newName,
+    data: JSON.parse(JSON.stringify(original.data)),
+    savedAt: new Date().toISOString(),
+  };
+  plans.push(newPlan);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(plans));
+  return newPlan;
 }

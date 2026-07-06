@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { getSavedPlans, savePlan, deletePlan } from '../utils/storage';
+import { getSavedPlans, savePlan, deletePlan, renamePlan, duplicatePlan } from '../utils/storage';
 
 export default function SaveLoadPanel({ inputs, onLoadPlan }) {
   const [plans, setPlans] = useState([]);
   const [planName, setPlanName] = useState('');
   const [message, setMessage] = useState('');
+  const [renamingId, setRenamingId] = useState(null);
+  const [renameValue, setRenameValue] = useState('');
 
   const refreshPlans = () => {
     setPlans(getSavedPlans());
@@ -44,6 +46,32 @@ export default function SaveLoadPanel({ inputs, onLoadPlan }) {
     setTimeout(() => setMessage(''), 3000);
   };
 
+  const handleStartRename = (plan) => {
+    setRenamingId(plan.id);
+    setRenameValue(plan.name);
+  };
+
+  const handleConfirmRename = () => {
+    const name = renameValue.trim();
+    if (!name) {
+      setRenamingId(null);
+      return;
+    }
+    renamePlan(renamingId, name);
+    setMessage(`Plan renamed to "${name}".`);
+    setRenamingId(null);
+    refreshPlans();
+    setTimeout(() => setMessage(''), 3000);
+  };
+
+  const handleDuplicate = (plan) => {
+    const newName = `${plan.name} (copy)`;
+    duplicatePlan(plan.id, newName);
+    setMessage(`Plan duplicated as "${newName}".`);
+    refreshPlans();
+    setTimeout(() => setMessage(''), 3000);
+  };
+
   return (
     <div className="save-load-panel">
       <div className="section-header">
@@ -75,21 +103,41 @@ export default function SaveLoadPanel({ inputs, onLoadPlan }) {
           {plans.map(plan => (
             <div key={plan.id} className="saved-plan-row">
               <div className="saved-plan-info">
-                <span className="saved-plan-name">{plan.name}</span>
-                <span className="saved-plan-date">
-                  {new Date(plan.savedAt).toLocaleDateString('en-US', {
-                    month: 'short', day: 'numeric', year: 'numeric',
-                    hour: '2-digit', minute: '2-digit',
-                  })}
-                </span>
+                {renamingId === plan.id ? (
+                  <input
+                    type="text"
+                    className="rename-input"
+                    value={renameValue}
+                    onChange={(e) => setRenameValue(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleConfirmRename(); if (e.key === 'Escape') setRenamingId(null); }}
+                    autoFocus
+                  />
+                ) : (
+                  <>
+                    <span className="saved-plan-name">{plan.name}</span>
+                    <span className="saved-plan-date">
+                      {new Date(plan.savedAt).toLocaleDateString('en-US', {
+                        month: 'short', day: 'numeric', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit',
+                      })}
+                    </span>
+                  </>
+                )}
               </div>
               <div className="saved-plan-actions">
-                <button type="button" className="btn-secondary btn-load" onClick={() => handleLoad(plan.id)}>
-                  Load
-                </button>
-                <button type="button" className="btn-remove" onClick={() => handleDelete(plan.id)} aria-label={`Delete ${plan.name}`}>
-                  ×
-                </button>
+                {renamingId === plan.id ? (
+                  <>
+                    <button type="button" className="btn-secondary btn-load" onClick={handleConfirmRename}>OK</button>
+                    <button type="button" className="btn-secondary btn-load" onClick={() => setRenamingId(null)}>Cancel</button>
+                  </>
+                ) : (
+                  <>
+                    <button type="button" className="btn-secondary btn-load" onClick={() => handleLoad(plan.id)}>Load</button>
+                    <button type="button" className="btn-secondary btn-load" onClick={() => handleDuplicate(plan)}>Duplicate</button>
+                    <button type="button" className="btn-secondary btn-load" onClick={() => handleStartRename(plan)}>Rename</button>
+                    <button type="button" className="btn-remove" onClick={() => handleDelete(plan.id)} aria-label={`Delete ${plan.name}`}>×</button>
+                  </>
+                )}
               </div>
             </div>
           ))}

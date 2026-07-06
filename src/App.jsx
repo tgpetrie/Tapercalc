@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import InputPanel from './InputPanel';
 import SummaryPanel from './SummaryPanel';
 import ScheduleTable from './ScheduleTable';
-import { generateSchedule, totalDailyDose } from './utils/taperMath';
+import GuidePanel from './components/GuidePanel';
+import TaperWizard from './components/TaperWizard';
+import { generateSchedule, totalDailyDose } from './utils/taperEngine';
 
 const DEFAULT_DOSE_LABELS = ['Morning', 'Afternoon', 'Evening', 'Bedtime'];
 
@@ -13,39 +15,37 @@ function makeDefaultDoses(count) {
     tabletMg: '',
     liquidMl: '',
     mgPerMl: 1,
+    time: '',
+    notes: '',
   }));
 }
 
-export default function App() {
-  const [inputs, setInputs] = useState({
+function makeDefaultInputs() {
+  return {
     doses: makeDefaultDoses(2),
     doseCount: '2',
     targetDose: 2.5,
-    taperType: 'linear',
+    strategy: 'linear',
+    frequency: 'weekly',
+    customInterval: '',
     reductionAmount: 2.5,
     reductionPercent: 10,
-    stepDuration: 14,
     cutStrategy: 'alternate',
     customOrder: [],
     holds: [],
     startDate: '',
-  });
+    medicationName: '',
+  };
+}
 
+export default function App() {
+  const [inputs, setInputs] = useState(makeDefaultInputs);
   const [schedule, setSchedule] = useState(null);
+  const [activeTab, setActiveTab] = useState('planner');
+  const [showWizard, setShowWizard] = useState(false);
 
   const handleCalculate = () => {
-    const {
-      doses,
-      targetDose,
-      taperType,
-      reductionAmount,
-      reductionPercent,
-      stepDuration,
-      cutStrategy,
-      customOrder,
-      holds,
-      startDate,
-    } = inputs;
+    const { doses, targetDose, strategy, frequency, customInterval, reductionAmount, reductionPercent, cutStrategy, customOrder, holds, startDate } = inputs;
 
     const startTotal = totalDailyDose(doses);
     const parsedTarget = parseFloat(targetDose);
@@ -66,10 +66,11 @@ export default function App() {
     const calculated = generateSchedule({
       doses,
       targetDose: parsedTarget,
-      taperType,
+      strategy,
+      frequency,
+      customInterval,
       reductionAmount,
       reductionPercent,
-      stepDuration,
       cutStrategy,
       customOrder,
       holds,
@@ -80,32 +81,77 @@ export default function App() {
   };
 
   const handleLoadPlan = (planData) => {
-    setInputs(planData);
+    setInputs({ ...makeDefaultInputs(), ...planData });
     setSchedule(null);
+  };
+
+  const handleWizardApply = (wizardConfig) => {
+    setInputs(prev => ({ ...prev, ...wizardConfig }));
+    setShowWizard(false);
   };
 
   return (
     <div className="app-container">
       <header className="app-header">
-        <h1>Medication Taper Calculator</h1>
-        <p className="subtitle">Generate safe, gradual dose reduction schedules with multi-dose support</p>
+        <h1>Medication Taper Planner</h1>
+        <p className="subtitle">A flexible taper planning tool for medication dose reduction</p>
       </header>
 
-      <main className="app-main">
-        <InputPanel
-          inputs={inputs}
-          setInputs={setInputs}
-          onCalculate={handleCalculate}
-          onLoadPlan={handleLoadPlan}
-        />
+      <div className="disclaimer-banner">
+        <strong>Disclaimer:</strong> This tool performs calculations only. It does NOT recommend
+        taper schedules or provide medical advice. All taper plans should be reviewed with an
+        appropriate healthcare professional.
+      </div>
 
-        {schedule && schedule.length > 0 && (
+      <nav className="tab-nav">
+        <button
+          className={`tab-button ${activeTab === 'planner' ? 'active' : ''}`}
+          onClick={() => setActiveTab('planner')}
+        >
+          Planner
+        </button>
+        <button
+          className={`tab-button ${activeTab === 'guide' ? 'active' : ''}`}
+          onClick={() => setActiveTab('guide')}
+        >
+          Guide
+        </button>
+      </nav>
+
+      <main className="app-main">
+        {activeTab === 'planner' && (
           <>
-            <SummaryPanel schedule={schedule} />
-            <ScheduleTable schedule={schedule} doseLabels={inputs.doses.map(d => d.label)} />
+            <div className="wizard-launch-section">
+              <button className="btn-secondary btn-wizard" onClick={() => setShowWizard(true)}>
+                Start Taper Wizard
+              </button>
+              <span className="wizard-launch-hint">Guided setup for a new taper plan</span>
+            </div>
+
+            <InputPanel
+              inputs={inputs}
+              setInputs={setInputs}
+              onCalculate={handleCalculate}
+              onLoadPlan={handleLoadPlan}
+            />
+
+            {schedule && schedule.length > 0 && (
+              <>
+                <SummaryPanel schedule={schedule} inputs={inputs} />
+                <ScheduleTable schedule={schedule} doseLabels={inputs.doses.map(d => d.label)} />
+              </>
+            )}
           </>
         )}
+
+        {activeTab === 'guide' && (
+          <GuidePanel />
+        )}
       </main>
+
+      {showWizard && (
+        <TaperWizard onApply={handleWizardApply} onClose={() => setShowWizard(false)} />
+      )}
 
       <footer className="app-footer">
         <p>Always consult with a healthcare provider before adjusting medication doses</p>
