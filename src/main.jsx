@@ -1,10 +1,9 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App.jsx'
-import './index.css'
+import CompassApp from './compass/CompassApp.jsx'
 
 ReactDOM.createRoot(document.getElementById('app')).render(
   <React.StrictMode>
-    <App />
+    <CompassApp />
   </React.StrictMode>,
 )
