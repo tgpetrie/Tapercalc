@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 
-const GUIDE_SECTIONS = [
+export const GUIDE_SECTIONS = [
   {
     title: 'Starting Dose',
     body: 'The total amount of medication you take each day when you begin the taper. This is your baseline.',
@@ -100,21 +100,49 @@ const GUIDE_SECTIONS = [
 ];
 
 export default function GuidePanel() {
+  const [query, setQuery] = useState('');
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredSections = useMemo(() => {
+    if (!normalizedQuery) return GUIDE_SECTIONS;
+    return GUIDE_SECTIONS.filter(section => (
+      section.title.toLowerCase().includes(normalizedQuery) ||
+      section.body.toLowerCase().includes(normalizedQuery)
+    ));
+  }, [normalizedQuery]);
+
   return (
     <div className="panel guide-panel">
-      <h2 className="panel-title">Guide</h2>
+      <div className="panel-header">
+        <div>
+          <p className="eyebrow">Compass Guide</p>
+          <h2 className="panel-title">Guide</h2>
+        </div>
+        <div className="guide-search">
+          <label htmlFor="guideSearch">Search guide</label>
+          <input
+            id="guideSearch"
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search terms"
+          />
+        </div>
+      </div>
       <p className="guide-intro">
         This guide explains the terms and concepts used in the taper calculator.
         All plans should be reviewed with an appropriate healthcare professional.
       </p>
       <div className="guide-grid">
-        {GUIDE_SECTIONS.map((section, i) => (
+        {filteredSections.map((section, i) => (
           <div key={i} className="guide-card">
             <h3 className="guide-card-title">{section.title}</h3>
             <p className="guide-card-body">{section.body}</p>
           </div>
         ))}
       </div>
+      {filteredSections.length === 0 && (
+        <p className="guide-empty">No guide entries match that search.</p>
+      )}
     </div>
   );
 }

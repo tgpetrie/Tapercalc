@@ -1,0 +1,221 @@
+/* ===== COMPASS Design System =====
+   Product primitives come first: tokens, typography, spacing, cards, buttons,
+   inputs, navigation, themes, and motion. Screens should compose these styles
+   instead of inventing local visual rules.
+*/
+
+:root {
+  --ds-space-1: 4px;
+  --ds-space-2: 8px;
+  --ds-space-3: 12px;
+  --ds-space-4: 16px;
+  --ds-space-5: 20px;
+  --ds-space-6: 24px;
+  --ds-space-8: 32px;
+  --ds-space-10: 40px;
+  --ds-space-12: 48px;
+  --ds-space-16: 64px;
+
+  --ds-radius-sm: 6px;
+  --ds-radius-md: 8px;
+  --ds-radius-lg: 12px;
+  --ds-radius-pill: 999px;
+
+  --ds-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  --ds-text-xs: 0.75rem;
+  --ds-text-sm: 0.875rem;
+  --ds-text-base: 1rem;
+  --ds-text-lg: 1.125rem;
+  --ds-text-xl: 1.35rem;
+  --ds-text-2xl: 1.75rem;
+  --ds-text-3xl: 2.25rem;
+  --ds-text-4xl: 3rem;
+
+  --ds-leading-tight: 1.08;
+  --ds-leading-normal: 1.5;
+
+  --ds-shadow-card: 0 14px 36px rgba(34, 49, 45, 0.09);
+  --ds-shadow-raised: 0 20px 55px rgba(34, 49, 45, 0.12);
+
+  --ds-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ds-motion-fast: 150ms;
+  --ds-motion-medium: 240ms;
+}
+
+.compass-app {
+  --color-bg: #f7f6f3;
+  --color-bg-soft: #ece8df;
+  --color-surface: #ffffff;
+  --color-surface-soft: #fbfaf7;
+  --color-text: #22312d;
+  --color-muted: #687973;
+  --color-primary: #2f5d50;
+  --color-secondary: #4f6d8c;
+  --color-accent: #d4a24c;
+  --color-warning: #b65a4a;
+  --color-success: #7ba67e;
+  --color-line: rgba(47, 93, 80, 0.16);
+
+  --compass-bg: var(--color-bg);
+  --compass-bg-2: var(--color-bg-soft);
+  --compass-card: var(--color-surface);
+  --compass-card-soft: var(--color-surface-soft);
+  --compass-text: var(--color-text);
+  --compass-muted: var(--color-muted);
+  --compass-primary: var(--color-primary);
+  --compass-secondary: var(--color-secondary);
+  --compass-accent: var(--color-accent);
+  --compass-warning: var(--color-warning);
+  --compass-success: var(--color-success);
+  --compass-line: var(--color-line);
+  --compass-shadow: var(--ds-shadow-card);
+
+  font-family: var(--ds-font-sans);
+  background:
+    linear-gradient(180deg, var(--color-bg), var(--color-bg-soft));
+  color: var(--color-text);
+}
+
+.compass-app.theme-night {
+  --color-bg: #141b24;
+  --color-bg-soft: #0e141b;
+  --color-surface: #1e2934;
+  --color-surface-soft: #22303d;
+  --color-text: #edf4f2;
+  --color-muted: #a8b8c1;
+  --color-primary: #7ba67e;
+  --color-secondary: #8aa6c8;
+  --color-accent: #d4a24c;
+  --color-line: rgba(237, 244, 242, 0.15);
+}
+
+.compass-app.theme-ocean {
+  --color-bg: #eef8fa;
+  --color-bg-soft: #dcecef;
+  --color-primary: #286274;
+  --color-secondary: #3f8091;
+  --color-accent: #c8954f;
+}
+
+.compass-app.theme-alpine {
+  --color-bg: #f5f8f6;
+  --color-bg-soft: #e6ece8;
+  --color-primary: #425f55;
+  --color-secondary: #5a7186;
+  --color-accent: #b9975b;
+}
+
+.compass-app.theme-paper {
+  --color-bg: #fbf6ea;
+  --color-bg-soft: #efe4cf;
+  --color-primary: #645a42;
+  --color-secondary: #786d5a;
+  --color-accent: #bc8f45;
+}
+
+.compass-app h1,
+.compass-app h2,
+.compass-app h3,
+.compass-app p {
+  letter-spacing: 0;
+}
+
+.ds-card,
+.compass-card,
+.metric-card,
+.panel {
+  border-radius: var(--ds-radius-md);
+  border: 1px solid var(--color-line);
+  background: var(--color-surface);
+  box-shadow: var(--ds-shadow-card);
+}
+
+.ds-card,
+.compass-card {
+  padding: var(--ds-space-6);
+}
+
+.ds-button,
+.compass-app .btn-primary,
+.compass-app .btn-secondary,
+.text-button {
+  min-height: 44px;
+  border-radius: var(--ds-radius-md);
+  padding: 0 var(--ds-space-4);
+  font: inherit;
+  font-weight: 800;
+  letter-spacing: 0;
+  cursor: pointer;
+  transition:
+    transform var(--ds-motion-fast) var(--ds-ease),
+    border-color var(--ds-motion-fast) var(--ds-ease),
+    background var(--ds-motion-fast) var(--ds-ease);
+}
+
+.ds-button:active,
+.compass-app .btn-primary:active,
+.compass-app .btn-secondary:active,
+.text-button:active {
+  transform: translateY(1px);
+}
+
+.compass-app .btn-primary {
+  background: var(--color-primary);
+  color: #fff;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 82%, #000);
+}
+
+.compass-app .btn-secondary {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-line);
+}
+
+.text-button {
+  color: var(--color-primary);
+  background: transparent;
+  border: 0;
+}
+
+.compass-app input,
+.compass-app select,
+.compass-app textarea {
+  border-radius: var(--ds-radius-sm);
+  border: 1px solid var(--color-line);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.compass-app input:focus,
+.compass-app select:focus,
+.compass-app textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 16%, transparent);
+}
+
+.ds-kicker,
+.eyebrow {
+  margin: 0 0 var(--ds-space-2);
+  color: var(--color-primary);
+  font-size: var(--ds-text-xs);
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ds-page-title {
+  margin: 0;
+  font-size: clamp(var(--ds-text-2xl), 4vw, var(--ds-text-4xl));
+  line-height: var(--ds-leading-tight);
+}
+
+.ds-subtle {
+  color: var(--color-muted);
+}
+
+.theme-swatch.theme-forest { --swatch-a: #2f5d50; --swatch-b: #d4a24c; }
+.theme-swatch.theme-night { --swatch-a: #141b24; --swatch-b: #8aa6c8; }
+.theme-swatch.theme-ocean { --swatch-a: #286274; --swatch-b: #86c7d2; }
+.theme-swatch.theme-alpine { --swatch-a: #425f55; --swatch-b: #b9975b; }
+.theme-swatch.theme-paper { --swatch-a: #fbf6ea; --swatch-b: #bc8f45; }

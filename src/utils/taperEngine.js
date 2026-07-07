@@ -468,3 +468,139 @@ export function validateInputs(inputs) {
 
   return warnings;
 }
+
+// ===== Calculation Sanity Checks =====
+
+function check(name, fn) {
+  try {
+    const detail = fn();
+    return { name, passed: true, detail };
+  } catch (error) {
+    return { name, passed: false, detail: error.message };
+  }
+}
+
+function expect(condition, message) {
+  if (!condition) throw new Error(message);
+}
+
+export function runCalculationSanityChecks() {
+  const baseDoses = [
+    { id: 'a', label: 'Morning', tabletMg: 5, liquidMl: 0, mgPerMl: 1, time: '', notes: '' },
+    { id: 'b', label: 'Evening', tabletMg: 5, liquidMl: 0, mgPerMl: 1, time: '', notes: '' },
+  ];
+
+  return [
+    check('Linear fixed amount', () => {
+      const schedule = generateSchedule({
+        doses: baseDoses,
+        targetDose: 5,
+        strategy: 'linear',
+        frequency: 'weekly',
+        reductionAmount: 1,
+        reductionPercent: 10,
+        cutStrategy: 'alternate',
+        maxDays: 60,
+      });
+      expect(schedule.length > 0, 'schedule should be generated');
+      expect(schedule[0].dailyReduction > 0, 'first interval should reduce');
+      return `${schedule.length} days`;
+    }),
+    check('Hyperbolic current-dose percentage', () => {
+      const schedule = generateSchedule({
+        doses: baseDoses,
+        targetDose: 5,
+        strategy: 'hyperbolic',
+        frequency: 'weekly',
+        reductionAmount: 1,
+        reductionPercent: 10,
+        cutStrategy: 'alternate',
+        maxDays: 90,
+      });
+      const cuts = schedule.filter(item => item.dailyReduction > 0).map(item => item.dailyReduction);
+      expect(cuts.length > 1, 'multiple cuts should be generated');
+      expect(cuts[1] < cuts[0], 'hyperbolic cuts should shrink');
+      return `${formatNumber(cuts[0], 4)} then ${formatNumber(cuts[1], 4)}`;
+    }),
+    check('Percentage of original dose', () => {
+      const schedule = generateSchedule({
+        doses: baseDoses,
+        targetDose: 5,
+        strategy: 'originalPct',
+        frequency: 'weekly',
+        reductionAmount: 1,
+        reductionPercent: 10,
+        cutStrategy: 'alternate',
+        maxDays: 60,
+      });
+      const cuts = schedule.filter(item => item.dailyReduction > 0).map(item => item.dailyReduction);
+      expect(cuts.length > 1, 'multiple cuts should be generated');
+      expect(Math.abs(cuts[0] - cuts[1]) < 0.0001, 'original-percent cuts should stay fixed');
+      return `${formatNumber(cuts[0], 4)} mg cuts`;
+    }),
+    check('Fixed daily reduction', () => {
+      const schedule = generateSchedule({
+        doses: baseDoses,
+        targetDose: 9,
+        strategy: 'fixedDaily',
+        frequency: 'daily',
+        reductionAmount: 0.1,
+        reductionPercent: 10,
+        cutStrategy: 'alternate',
+        maxDays: 30,
+      });
+      expect(schedule[0].dailyReduction > 0, 'day one should reduce');
+      expect(schedule[1].dailyReduction > 0, 'day two should reduce');
+      return `${schedule.length} days`;
+    }),
+    check('Holds', () => {
+      const schedule = generateSchedule({
+        doses: baseDoses,
+        targetDose: 5,
+        strategy: 'linear',
+        frequency: 'weekly',
+        reductionAmount: 1,
+        reductionPercent: 10,
+        cutStrategy: 'alternate',
+        holds: [{ startDay: 3, lengthDays: 2, reason: 'test rest point' }],
+        maxDays: 60,
+      });
+      expect(schedule.some(item => item.status === 'hold'), 'hold rows should be present');
+      return 'hold rows present';
+    }),
+    check('Multiple daily doses', () => {
+      expect(totalDailyDose(baseDoses) === 10, 'two doses should total 10mg');
+      return 'two-dose total is 10mg';
+    }),
+    check('Calendar dates', () => {
+      const schedule = generateSchedule({
+        doses: baseDoses,
+        targetDose: 9,
+        strategy: 'fixedDaily',
+        frequency: 'daily',
+        reductionAmount: 0.1,
+        reductionPercent: 10,
+        cutStrategy: 'alternate',
+        startDate: '2026-07-06',
+        maxDays: 10,
+      });
+      expect(schedule[0].date === '2026-07-06', 'first date should match start date');
+      expect(Boolean(schedule[0].weekday), 'weekday should be generated');
+      return `${schedule[0].date} ${schedule[0].weekday}`;
+    }),
+    check('Target dose stop behavior', () => {
+      const schedule = generateSchedule({
+        doses: baseDoses,
+        targetDose: 9.8,
+        strategy: 'fixedDaily',
+        frequency: 'daily',
+        reductionAmount: 0.1,
+        reductionPercent: 10,
+        cutStrategy: 'alternate',
+        maxDays: 60,
+      });
+      expect(schedule.some(item => item.status === 'target'), 'target status should be reached');
+      return `${schedule.length} days`;
+    }),
+  ];
+}
