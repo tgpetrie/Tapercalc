@@ -2,8 +2,15 @@ import React, { useMemo, useState } from 'react';
 import InputPanel from './InputPanel';
 import SummaryPanel from './SummaryPanel';
 import ScheduleTable from './ScheduleTable';
+import CalendarRouteView from './components/CalendarRouteView';
+import ContinuityCard from './components/ContinuityCard';
+import CurrentPositionCard from './components/CurrentPositionCard';
 import GuidePanel from './components/GuidePanel';
+import NextChangeCard from './components/NextChangeCard';
+import ResourceLibrary from './components/ResourceLibrary';
 import TaperWizard from './components/TaperWizard';
+import TodayPanel from './components/TodayPanel';
+import TodayStep from './components/TodayStep';
 import {
   PRODUCT_NAME,
   REFLECTIONS,
@@ -20,6 +27,7 @@ import {
   totalDailyDose,
   validateInputs,
 } from './utils/taperEngine';
+import { getCheckInForDate, getContinuity, saveCheckIn } from './utils/storage';
 
 const DEFAULT_DOSE_LABELS = ['Morning', 'Afternoon', 'Evening', 'Bedtime'];
 
@@ -68,6 +76,10 @@ function readInitialReflectionSetting() {
   } catch {
     return true;
   }
+}
+
+function getTodayKey() {
+  return new Date().toISOString().split('T')[0];
 }
 
 function CompassLogo() {
@@ -132,74 +144,34 @@ function getRouteStats(schedule, inputs) {
   };
 }
 
-function Dashboard({ inputs, schedule, reflectionsEnabled, onJourney, onCalendar, onGuide }) {
+function Dashboard({ inputs, schedule, reflectionsEnabled, continuity, todayCheckIn, onContinue, onCalendar, onGuide }) {
   const stats = getRouteStats(schedule, inputs);
-  const strategy = STRATEGIES[inputs.strategy] || STRATEGIES.linear;
-  const frequency = FREQUENCIES[inputs.frequency] || FREQUENCIES.weekly;
   const reflection = REFLECTIONS[new Date().getDate() - 1];
-  const todayDose = schedule?.[0]?.totalDailyDose ?? stats.currentTotal;
-  const nextRestPoint = schedule?.find(item => item.status === 'hold');
 
   return (
     <div className="dashboard-grid">
-      <section className="current-position-card compass-card">
-        <div className="card-header-row">
-          <div>
-            <p className="eyebrow">{getGreeting()}</p>
-            <h2>Current Position</h2>
-          </div>
-          <CompassLogo />
-        </div>
-        <strong className="position-dose">{formatNumber(stats.currentTotal)} mg</strong>
-        <div className="position-grid">
-          <div>
-            <span>Strategy</span>
-            <strong>{strategy.short}</strong>
-          </div>
-          <div>
-            <span>Frequency</span>
-            <strong>{frequency.label}</strong>
-          </div>
-          <div>
-            <span>Started</span>
-            <strong>{schedule?.[0] ? `${formatNumber(schedule[0].totalDailyDose)} mg` : 'Not plotted'}</strong>
-          </div>
-          <div>
-            <span>Destination</span>
-            <strong>{formatNumber(stats.targetDose)} mg</strong>
-          </div>
-          <div>
-            <span>Next Reduction</span>
-            <strong>{stats.nextMilestone ? `Day ${stats.nextMilestone.day}` : 'After plotting'}</strong>
-          </div>
-          <div>
-            <span>Next Rest Point</span>
-            <strong>{nextRestPoint ? `Day ${nextRestPoint.day}` : 'None planned'}</strong>
-          </div>
-        </div>
+      <section className="dashboard-greeting compass-card">
+        <p className="eyebrow">{getGreeting()}</p>
+        <h2>Journey Overview</h2>
       </section>
-
-      <section className="metric-card">
-        <span>Today's Dose</span>
-        <strong>{formatNumber(todayDose)} mg</strong>
-        <small>{inputs.medicationName || 'Medication not named yet'}</small>
-      </section>
-      <section className="metric-card">
-        <span>Today's Schedule</span>
-        <strong>{inputs.doses.length} doses</strong>
-        <small>{inputs.doses.map(d => d.label).filter(Boolean).join(', ')}</small>
-      </section>
-      <section className="metric-card">
-        <span>Next Milestone</span>
-        <strong>{stats.nextMilestone ? `Day ${stats.nextMilestone.day}` : 'Not plotted'}</strong>
-        <small>{stats.nextMilestone?.note || `${strategy.short} - ${frequency.label}`}</small>
-      </section>
+      <TodayPanel
+        inputs={inputs}
+        schedule={schedule}
+        todayCheckIn={todayCheckIn}
+        onContinue={onContinue}
+      />
+      <CurrentPositionCard
+        currentTotal={stats.currentTotal}
+        targetDose={stats.targetDose}
+        schedule={schedule}
+        inputs={inputs}
+      />
+      <NextChangeCard schedule={schedule} />
+      <ContinuityCard continuity={continuity} todayCheckIn={todayCheckIn} />
 
       <section className="compass-card quick-actions-card">
         <p className="eyebrow">Quick Actions</p>
         <div className="quick-actions-grid">
-          <button type="button" className="btn-primary" onClick={onJourney}>Continue Journey</button>
-          <button type="button" className="btn-secondary" onClick={onJourney}>Plot My Course</button>
           <button type="button" className="btn-secondary" onClick={onCalendar}>Print Route</button>
           <button type="button" className="btn-secondary" onClick={onGuide}>Guide</button>
         </div>
@@ -460,6 +432,9 @@ export default function App() {
   const [schedule, setSchedule] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showWizard, setShowWizard] = useState(false);
+  const [showTodayStep, setShowTodayStep] = useState(false);
+  const [continuity, setContinuity] = useState(getContinuity);
+  const [todayCheckIn, setTodayCheckIn] = useState(() => getCheckInForDate(getTodayKey()));
   const [theme, setTheme] = useState(readInitialTheme);
   const [reflectionsEnabled, setReflectionsEnabled] = useState(readInitialReflectionSetting);
 
@@ -512,6 +487,13 @@ export default function App() {
     setShowWizard(false);
   };
 
+  const handleSaveCheckIn = (data) => {
+    const checkIn = saveCheckIn(data);
+    setTodayCheckIn(checkIn);
+    setContinuity(getContinuity());
+    return checkIn;
+  };
+
   return (
     <div className={`compass-app theme-${theme}`}>
       <aside className="app-sidebar">
@@ -551,9 +533,6 @@ export default function App() {
             <button type="button" className="btn-secondary" onClick={() => setShowWizard(true)}>
               Guided Setup
             </button>
-            <button type="button" className="btn-primary" onClick={() => setActiveTab('journey')}>
-              Plot My Course
-            </button>
           </div>
         </header>
 
@@ -568,7 +547,9 @@ export default function App() {
               inputs={inputs}
               schedule={schedule}
               reflectionsEnabled={reflectionsEnabled}
-              onJourney={() => setActiveTab('journey')}
+              continuity={continuity}
+              todayCheckIn={todayCheckIn}
+              onContinue={() => setShowTodayStep(true)}
               onCalendar={() => setActiveTab('calendar')}
               onGuide={() => setActiveTab('guide')}
             />
@@ -611,6 +592,7 @@ export default function App() {
                   </div>
                   <JourneyPath schedule={schedule} />
                 </section>
+                <CalendarRouteView schedule={schedule} />
                 <SummaryPanel schedule={schedule} inputs={inputs} />
                 <ScheduleTable schedule={schedule} doseLabels={inputs.doses.map(d => d.label)} />
               </div>
@@ -619,7 +601,12 @@ export default function App() {
             )
           )}
 
-          {activeTab === 'guide' && <GuidePanel />}
+          {activeTab === 'guide' && (
+            <div className="page-stack">
+              <GuidePanel />
+              <ResourceLibrary />
+            </div>
+          )}
 
           {activeTab === 'insights' && <InsightsPage schedule={schedule} inputs={inputs} />}
 
@@ -649,6 +636,19 @@ export default function App() {
 
       {showWizard && (
         <TaperWizard onApply={handleWizardApply} onClose={() => setShowWizard(false)} />
+      )}
+
+      {showTodayStep && (
+        <div className="today-step-overlay">
+          <TodayStep
+            inputs={inputs}
+            schedule={schedule}
+            existingCheckIn={todayCheckIn}
+            theme={theme}
+            onSave={handleSaveCheckIn}
+            onClose={() => setShowTodayStep(false)}
+          />
+        </div>
       )}
     </div>
   );

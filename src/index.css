@@ -1854,9 +1854,384 @@ td {
   grid-column: span 4;
 }
 
+/* ===== Living Mode components ===== */
+.dashboard-greeting {
+  grid-column: span 12;
+  min-height: 116px;
+  display: grid;
+  align-content: center;
+}
+
+.dashboard-greeting h2,
+.today-panel h2,
+.today-step-main h2,
+.support-panel h2,
+.resource-library h2,
+.calendar-route h2 {
+  font-size: var(--ds-text-2xl);
+  line-height: var(--ds-leading-tight);
+}
+
+.today-panel {
+  grid-column: span 8;
+  display: grid;
+  gap: var(--ds-space-4);
+}
+
+.today-dose-list {
+  display: grid;
+  gap: var(--ds-space-2);
+}
+
+.today-dose-row {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ds-space-3);
+  padding: var(--ds-space-3);
+  border: 1px solid var(--compass-line);
+  border-radius: 8px;
+  background: var(--compass-card-soft);
+}
+
+.today-dose-row span {
+  font-weight: 800;
+}
+
+.today-dose-row strong {
+  color: var(--compass-muted);
+  font-size: var(--ds-text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.continuity-card,
+.next-change-card {
+  grid-column: span 4;
+}
+
+.today-step-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow-y: auto;
+  padding: 24px;
+  background: color-mix(in srgb, var(--compass-bg) 80%, rgba(0, 0, 0, 0.55));
+  backdrop-filter: blur(12px);
+}
+
+.today-step-shell {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 16px;
+  align-items: start;
+}
+
+.today-step-main {
+  display: grid;
+  gap: var(--ds-space-5);
+}
+
+.dose-check-list,
+.support-prompts,
+.resource-grid,
+.plan-status-grid {
+  display: grid;
+  gap: var(--ds-space-3);
+}
+
+.dose-check-item {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.8fr) minmax(260px, 1.2fr);
+  gap: var(--ds-space-3);
+  align-items: center;
+  padding: var(--ds-space-4);
+  border: 1px solid var(--compass-line);
+  border-radius: 8px;
+  background: var(--compass-card-soft);
+}
+
+.dose-check-item strong,
+.dose-check-item span {
+  display: block;
+}
+
+.dose-check-item span {
+  color: var(--compass-muted);
+  font-size: var(--ds-text-sm);
+}
+
+.dose-check-item input,
+.today-step-section textarea,
+.resource-controls input,
+.resource-controls select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--compass-line);
+  border-radius: 8px;
+  background: var(--compass-card);
+  color: var(--compass-text);
+  font: inherit;
+  padding: 0 var(--ds-space-3);
+}
+
+.dose-check-item input {
+  grid-column: 2;
+}
+
+.today-step-section textarea {
+  min-height: 96px;
+  padding-top: var(--ds-space-3);
+  resize: vertical;
+}
+
+.segmented-control {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: var(--ds-space-2);
+}
+
+.segmented-control button,
+.plan-status-grid button {
+  min-height: 40px;
+  border: 1px solid var(--compass-line);
+  border-radius: 8px;
+  background: var(--compass-card);
+  color: var(--compass-text);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  padding: 0 var(--ds-space-3);
+}
+
+.segmented-control button.active,
+.plan-status-grid button.active {
+  border-color: var(--compass-primary);
+  background: color-mix(in srgb, var(--compass-primary) 12%, var(--compass-card));
+  color: var(--compass-primary);
+}
+
+.today-step-section {
+  display: grid;
+  gap: var(--ds-space-3);
+}
+
+.today-step-section h3,
+.support-panel h3,
+.resource-card h3 {
+  margin: 0;
+}
+
+.plan-status-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.today-step-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-3);
+  flex-wrap: wrap;
+}
+
+.today-step-actions span {
+  color: var(--compass-muted);
+  font-size: var(--ds-text-sm);
+}
+
+.support-rail {
+  display: grid;
+  gap: 16px;
+}
+
+.support-panel,
+.resource-library.compact {
+  padding: 18px;
+  border: 1px solid var(--compass-line);
+  border-radius: 8px;
+  background: var(--compass-card);
+  box-shadow: var(--compass-shadow);
+}
+
+.support-prompt {
+  border: 1px solid var(--compass-line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--compass-card-soft);
+}
+
+.support-prompt button {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--ds-space-3);
+  border: 0;
+  background: transparent;
+  color: var(--compass-text);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  text-align: left;
+}
+
+.support-prompt p {
+  margin: 0;
+  padding: 0 var(--ds-space-3) var(--ds-space-3);
+  color: var(--compass-muted);
+  font-size: var(--ds-text-sm);
+}
+
+.resource-library {
+  display: grid;
+  gap: var(--ds-space-4);
+}
+
+.resource-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 240px);
+  gap: var(--ds-space-3);
+}
+
+.resource-grid {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.resource-library.compact .resource-grid {
+  grid-template-columns: 1fr;
+}
+
+.resource-card {
+  display: grid;
+  gap: var(--ds-space-3);
+  min-height: 190px;
+  padding: var(--ds-space-4);
+  border: 1px solid var(--compass-line);
+  border-radius: 8px;
+  background: var(--compass-card-soft);
+}
+
+.resource-category {
+  color: var(--compass-primary);
+  font-size: var(--ds-text-xs);
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.resource-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-2);
+}
+
+.resource-meta span,
+.resource-note {
+  color: var(--compass-muted);
+  font-size: var(--ds-text-xs);
+}
+
+.resource-disclaimer {
+  margin: 0;
+  font-size: var(--ds-text-sm);
+}
+
+.calendar-route {
+  display: grid;
+  gap: var(--ds-space-4);
+}
+
+.calendar-day-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(142px, 1fr));
+  gap: var(--ds-space-3);
+}
+
+.calendar-day-card {
+  min-height: 142px;
+  display: grid;
+  align-content: start;
+  gap: var(--ds-space-2);
+  padding: var(--ds-space-4);
+  border: 1px solid var(--compass-line);
+  border-radius: 8px;
+  background: var(--compass-card-soft);
+}
+
+.calendar-day-card span {
+  color: var(--compass-muted);
+  font-size: var(--ds-text-xs);
+}
+
+.calendar-day-card strong {
+  font-size: var(--ds-text-lg);
+}
+
+.calendar-day-card small {
+  color: var(--compass-muted);
+}
+
+.calendar-day-card em {
+  color: var(--compass-primary);
+  font-size: var(--ds-text-sm);
+  font-style: normal;
+  font-weight: 800;
+}
+
+.calendar-day-card.status-hold {
+  border-color: color-mix(in srgb, var(--compass-accent) 55%, var(--compass-line));
+  background: color-mix(in srgb, var(--compass-accent) 12%, var(--compass-card));
+}
+
+.completion-cue {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-3);
+  min-height: 48px;
+  padding: 0 var(--ds-space-4);
+  border: 1px solid color-mix(in srgb, var(--compass-success) 42%, var(--compass-line));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--compass-success) 12%, var(--compass-card));
+  color: var(--compass-primary);
+  animation: cue-settle 420ms ease both;
+}
+
+.cue-path {
+  width: 42px;
+  height: 12px;
+  border-bottom: 3px solid var(--compass-primary);
+  border-radius: 0 0 50% 50%;
+  position: relative;
+}
+
+.cue-path::after {
+  content: "";
+  position: absolute;
+  right: -2px;
+  bottom: -5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--compass-primary);
+}
+
+@keyframes cue-settle {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (max-width: 1100px) {
   .current-position-card,
-  .quick-actions-card {
+  .quick-actions-card,
+  .today-panel,
+  .continuity-card,
+  .next-change-card {
     grid-column: span 12;
   }
 
@@ -1876,6 +2251,14 @@ td {
 
   .report-grid .metric-card {
     grid-column: span 12;
+  }
+
+  .today-step-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .support-rail {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1993,6 +2376,20 @@ td {
   .hero-copy h1,
   .compass-card h2 {
     font-size: 2.1rem;
+  }
+
+  .today-step-overlay {
+    padding: 12px;
+  }
+
+  .dose-check-item,
+  .resource-controls,
+  .plan-status-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dose-check-item input {
+    grid-column: auto;
   }
 }
 

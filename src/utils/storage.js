@@ -4,6 +4,7 @@
  */
 
 const STORAGE_KEY = 'taper-calculator-plans';
+const CHECKINS_KEY = 'compass-daily-checkins';
 
 /**
  * Get all saved plans from localStorage.
@@ -99,4 +100,55 @@ export function duplicatePlan(id, newName) {
   plans.push(newPlan);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(plans));
   return newPlan;
+}
+
+export function getCheckIns() {
+  try {
+    const raw = localStorage.getItem(CHECKINS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export function getCheckInForDate(date) {
+  return getCheckIns().find(checkIn => checkIn.date === date) || null;
+}
+
+export function saveCheckIn(data) {
+  const checkIns = getCheckIns();
+  const existingIndex = checkIns.findIndex(checkIn => checkIn.date === data.date);
+  const checkIn = {
+    id: data.id || `checkin-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    ...data,
+    completedAt: data.completedAt || new Date().toISOString(),
+  };
+
+  if (existingIndex >= 0) {
+    checkIns[existingIndex] = checkIn;
+  } else {
+    checkIns.push(checkIn);
+  }
+
+  checkIns.sort((a, b) => a.date.localeCompare(b.date));
+  localStorage.setItem(CHECKINS_KEY, JSON.stringify(checkIns));
+  return checkIn;
+}
+
+export function getContinuity() {
+  const checkIns = getCheckIns();
+  const checkInsByDate = checkIns.reduce((acc, checkIn) => {
+    acc[checkIn.date] = checkIn;
+    return acc;
+  }, {});
+
+  const lastCheckIn = checkIns[checkIns.length - 1] || null;
+  return {
+    daysLogged: checkIns.length,
+    lastCheckInDate: lastCheckIn?.date || '',
+    currentRhythm: checkIns.length > 0 ? 'active' : 'not_started',
+    checkInsByDate,
+  };
 }

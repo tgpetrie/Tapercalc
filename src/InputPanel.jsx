@@ -238,7 +238,7 @@ export default function InputPanel({ inputs, setInputs, onCalculate, onLoadPlan 
         )}
 
         <button type="submit" className="btn-primary">
-          Generate Schedule
+          Plot My Course
         </button>
       </form>
 
