@@ -20,11 +20,11 @@ const SUPPORT_PROMPTS = [
   },
 ];
 
-export default function SupportRail() {
+export default function SupportRail({ compact = false }) {
   const [openIndex, setOpenIndex] = useState(0);
 
   return (
-    <aside className="support-rail">
+    <aside className={compact ? 'support-rail compact' : 'support-rail'}>
       <div className="support-panel">
         <p className="eyebrow">Need Direction?</p>
         <h2>Questions or concerns</h2>
@@ -39,7 +39,7 @@ export default function SupportRail() {
           ))}
         </div>
       </div>
-      <ResourceLibrary compact />
+      {!compact && <ResourceLibrary compact />}
     </aside>
   );
 }

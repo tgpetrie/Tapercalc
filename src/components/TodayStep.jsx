@@ -123,7 +123,7 @@ export default function TodayStep({ inputs, schedule, existingCheckIn, theme, on
         </section>
 
         <div className="today-step-actions">
-          <button type="submit" className="btn-primary">Finish Check-in</button>
+          <button type="submit" className="btn-primary">Save Check-in</button>
           <span>Logging what happened preserves continuity.</span>
         </div>
         <ThemeCompletionCue theme={theme} visible={saved} />

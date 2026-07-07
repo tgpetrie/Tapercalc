@@ -1348,7 +1348,7 @@ td {
 
 .app-shell {
   min-width: 0;
-  padding: 28px;
+  padding: 24px;
 }
 
 .app-topbar {
@@ -1360,8 +1360,8 @@ td {
 }
 
 .app-topbar h1 {
-  font-size: clamp(2rem, 5vw, 4.4rem);
-  line-height: 1;
+  font-size: clamp(1.55rem, 2.4vw, 2.15rem);
+  line-height: 1.1;
   letter-spacing: 0;
   margin: 0;
 }
@@ -1412,11 +1412,12 @@ td {
 }
 
 .compass-app .disclaimer-banner {
-  margin-bottom: 22px;
+  margin-bottom: 16px;
   border-radius: 8px;
   background: color-mix(in srgb, var(--compass-accent) 14%, var(--compass-card));
   border-color: color-mix(in srgb, var(--compass-accent) 34%, transparent);
   color: var(--compass-text);
+  font-size: 0.9rem;
 }
 
 .dashboard-grid,
@@ -1855,6 +1856,254 @@ td {
 }
 
 /* ===== Living Mode components ===== */
+.today-workspace {
+  display: grid;
+  gap: 16px;
+}
+
+.today-overview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 64px;
+}
+
+.today-overview-header h2 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  line-height: 0.98;
+  letter-spacing: 0;
+}
+
+.today-overview-header p {
+  margin: 6px 0 0;
+  color: var(--compass-muted);
+  font-weight: 750;
+}
+
+.today-content-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.72fr) minmax(260px, 0.62fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.today-primary-column,
+.today-secondary-column {
+  display: grid;
+  gap: 16px;
+}
+
+.card-label {
+  display: block;
+  color: var(--compass-muted);
+  font-size: var(--ds-text-xs);
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.continue-journey-button {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  width: 100%;
+  min-height: 58px;
+  padding: 10px 18px;
+  border: 1px solid color-mix(in srgb, var(--compass-primary) 80%, #000);
+  border-radius: 8px;
+  background: var(--compass-primary);
+  color: #fff;
+  cursor: pointer;
+  text-align: left;
+  box-shadow: 0 12px 26px color-mix(in srgb, var(--compass-primary) 18%, transparent);
+}
+
+.continue-journey-button span {
+  font-size: 1rem;
+  font-weight: 850;
+}
+
+.continue-journey-button small {
+  color: color-mix(in srgb, #fff 78%, transparent);
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.today-dose-card,
+.journey-story-card,
+.current-position-compact,
+.upcoming-rest-card,
+.journey-record-card,
+.today-workspace .next-change-card {
+  min-height: 0;
+  box-shadow: 0 10px 30px rgba(34, 49, 45, 0.07);
+}
+
+.today-dose-card {
+  display: grid;
+  gap: 14px;
+}
+
+.today-dose-card-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.today-dose-card-header strong {
+  display: block;
+  margin-top: 4px;
+  font-size: clamp(1.7rem, 3vw, 2.45rem);
+  line-height: 1.05;
+}
+
+.logged-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--compass-success) 15%, var(--compass-card));
+  color: var(--compass-primary);
+  font-size: var(--ds-text-xs);
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.today-dose-list.compact {
+  gap: 8px;
+}
+
+.today-dose-list.compact .today-dose-row {
+  min-height: 44px;
+}
+
+.today-dose-row div {
+  display: grid;
+  gap: 1px;
+}
+
+.today-dose-row small {
+  color: var(--compass-muted);
+  font-size: var(--ds-text-xs);
+}
+
+.journey-story-card {
+  display: grid;
+  gap: 16px;
+}
+
+.story-header,
+.story-completion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.story-header strong,
+.story-completion strong {
+  font-size: var(--ds-text-lg);
+}
+
+.story-route {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24px minmax(0, 1fr) 24px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.story-route div {
+  min-height: 86px;
+  padding: 14px;
+  border: 1px solid var(--compass-line);
+  border-radius: 8px;
+  background: var(--compass-card-soft);
+}
+
+.story-route span,
+.story-completion span {
+  display: block;
+  color: var(--compass-muted);
+  font-size: var(--ds-text-xs);
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.story-route strong {
+  display: block;
+  margin-top: 8px;
+  font-size: clamp(1.2rem, 2.4vw, 1.65rem);
+  line-height: 1.05;
+}
+
+.story-route i {
+  height: 1px;
+  background: var(--compass-line);
+  position: relative;
+}
+
+.story-route i::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: -4px;
+  width: 8px;
+  height: 8px;
+  border-top: 1px solid var(--compass-line);
+  border-right: 1px solid var(--compass-line);
+  transform: rotate(45deg);
+}
+
+.current-position-compact,
+.upcoming-rest-card,
+.journey-record-card,
+.today-workspace .next-change-card {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.current-position-compact strong {
+  font-size: clamp(2.2rem, 5vw, 3.6rem);
+  line-height: 0.98;
+}
+
+.journey-record-card strong,
+.upcoming-rest-card strong,
+.today-workspace .next-change-card strong {
+  font-size: clamp(1.6rem, 3vw, 2.15rem);
+}
+
+.current-position-compact small,
+.upcoming-rest-card small,
+.journey-record-card small,
+.today-workspace .next-change-card small {
+  color: var(--compass-muted);
+}
+
+.today-workspace .metric-card {
+  grid-column: auto;
+}
+
+.today-workspace .support-rail.compact {
+  position: sticky;
+  top: 24px;
+}
+
+.today-workspace .support-rail.compact .support-panel {
+  box-shadow: 0 10px 30px rgba(34, 49, 45, 0.07);
+}
+
+.today-workspace .support-rail.compact .support-panel h2 {
+  font-size: var(--ds-text-xl);
+}
+
 .dashboard-greeting {
   grid-column: span 12;
   min-height: 116px;
@@ -2235,6 +2484,15 @@ td {
     grid-column: span 12;
   }
 
+  .today-content-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 0.72fr);
+  }
+
+  .today-workspace .support-rail.compact {
+    grid-column: 1 / -1;
+    position: static;
+  }
+
   .position-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2259,6 +2517,45 @@ td {
 
   .support-rail {
     grid-template-columns: 1fr;
+  }
+
+  .today-overview-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .today-content-grid,
+  .today-primary-column,
+  .today-secondary-column {
+    grid-template-columns: 1fr;
+  }
+
+  .continue-journey-button {
+    width: 100%;
+  }
+
+  .story-route {
+    grid-template-columns: 1fr;
+  }
+
+  .story-route i {
+    width: 1px;
+    height: 18px;
+    justify-self: center;
+  }
+
+  .story-route i::after {
+    right: -4px;
+    top: auto;
+    bottom: 0;
+    transform: rotate(135deg);
+  }
+
+  .story-header,
+  .story-completion,
+  .today-dose-card-header {
+    align-items: start;
+    flex-direction: column;
   }
 }
 
@@ -2321,10 +2618,7 @@ td {
   }
 
   .mobile-bottom-nav {
-    position: fixed;
-    left: 12px;
-    right: 12px;
-    bottom: 12px;
+    position: static;
     z-index: 50;
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -2335,6 +2629,7 @@ td {
     border: 1px solid var(--compass-line);
     box-shadow: var(--compass-shadow);
     backdrop-filter: blur(18px);
+    margin: 24px 12px 12px;
   }
 
   .mobile-bottom-nav button {

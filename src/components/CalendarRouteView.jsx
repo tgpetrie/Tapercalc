@@ -9,7 +9,7 @@ export default function CalendarRouteView({ schedule }) {
     <section className="calendar-route compass-card">
       <div className="card-header-row">
         <div>
-          <p className="eyebrow">Calendar</p>
+          <p className="eyebrow">Route</p>
           <h2>Next route days</h2>
         </div>
       </div>

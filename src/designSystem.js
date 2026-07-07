@@ -1,9 +1,9 @@
 export const PRODUCT_NAME = 'COMPASS';
 
 export const WORKSPACES = [
-  { id: 'dashboard', label: 'Dashboard', shortLabel: 'Home' },
+  { id: 'dashboard', label: 'Today', shortLabel: 'Today' },
   { id: 'journey', label: 'Journey', shortLabel: 'Journey' },
-  { id: 'calendar', label: 'Calendar', shortLabel: 'Calendar' },
+  { id: 'calendar', label: 'Route', shortLabel: 'Route' },
   { id: 'guide', label: 'Guide', shortLabel: 'Guide' },
   { id: 'insights', label: 'Insights', shortLabel: 'Insights' },
   { id: 'settings', label: 'Settings', shortLabel: 'Settings' },

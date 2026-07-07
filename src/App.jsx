@@ -3,20 +3,15 @@ import InputPanel from './InputPanel';
 import SummaryPanel from './SummaryPanel';
 import ScheduleTable from './ScheduleTable';
 import CalendarRouteView from './components/CalendarRouteView';
-import ContinuityCard from './components/ContinuityCard';
-import CurrentPositionCard from './components/CurrentPositionCard';
 import GuidePanel from './components/GuidePanel';
-import NextChangeCard from './components/NextChangeCard';
 import ResourceLibrary from './components/ResourceLibrary';
 import TaperWizard from './components/TaperWizard';
-import TodayPanel from './components/TodayPanel';
+import TodayOverview from './components/TodayOverview';
 import TodayStep from './components/TodayStep';
 import {
   PRODUCT_NAME,
-  REFLECTIONS,
   THEMES,
   WORKSPACES,
-  getGreeting,
 } from './designSystem';
 import {
   FREQUENCIES,
@@ -144,84 +139,6 @@ function getRouteStats(schedule, inputs) {
   };
 }
 
-function Dashboard({ inputs, schedule, reflectionsEnabled, continuity, todayCheckIn, onContinue, onCalendar, onGuide }) {
-  const stats = getRouteStats(schedule, inputs);
-  const reflection = REFLECTIONS[new Date().getDate() - 1];
-
-  return (
-    <div className="dashboard-grid">
-      <section className="dashboard-greeting compass-card">
-        <p className="eyebrow">{getGreeting()}</p>
-        <h2>Journey Overview</h2>
-      </section>
-      <TodayPanel
-        inputs={inputs}
-        schedule={schedule}
-        todayCheckIn={todayCheckIn}
-        onContinue={onContinue}
-      />
-      <CurrentPositionCard
-        currentTotal={stats.currentTotal}
-        targetDose={stats.targetDose}
-        schedule={schedule}
-        inputs={inputs}
-      />
-      <NextChangeCard schedule={schedule} />
-      <ContinuityCard continuity={continuity} todayCheckIn={todayCheckIn} />
-
-      <section className="compass-card quick-actions-card">
-        <p className="eyebrow">Quick Actions</p>
-        <div className="quick-actions-grid">
-          <button type="button" className="btn-secondary" onClick={onCalendar}>Print Route</button>
-          <button type="button" className="btn-secondary" onClick={onGuide}>Guide</button>
-        </div>
-      </section>
-
-      <section className="compass-card journey-card">
-        <div className="card-header-row">
-          <div>
-            <p className="eyebrow">Journey Path</p>
-            <h2>Route overview</h2>
-          </div>
-          <button type="button" className="text-button" onClick={onCalendar}>
-            Open Calendar
-          </button>
-        </div>
-        <JourneyPath schedule={schedule} />
-      </section>
-
-      <section className="compass-card summary-card">
-        <p className="eyebrow">Journey Summary</p>
-        <div className="summary-strip">
-          <div>
-            <strong>{stats.routeDays || '-'}</strong>
-            <span>days</span>
-          </div>
-          <div>
-            <strong>{formatNumber(stats.targetDose)}</strong>
-            <span>target mg</span>
-          </div>
-          <div>
-            <strong>{stats.holdDays}</strong>
-            <span>rest days</span>
-          </div>
-          <div>
-            <strong>{formatNumber(stats.percentComplete, 1)}%</strong>
-            <span>planned reduction</span>
-          </div>
-        </div>
-      </section>
-
-      {reflectionsEnabled && (
-        <section className="compass-card reflection-card">
-          <p className="eyebrow">Today's Reflection</p>
-          <blockquote>{reflection}</blockquote>
-        </section>
-      )}
-    </div>
-  );
-}
-
 function JourneyPath({ schedule }) {
   if (!schedule || schedule.length === 0) {
     return (
@@ -332,7 +249,7 @@ function SettingsPage({ theme, setTheme, reflectionsEnabled, setReflectionsEnabl
       <section className="compass-card">
         <p className="eyebrow">Settings</p>
         <h2>Set the workspace tone.</h2>
-        <p>Choose a calm palette and decide whether daily reflections appear on the Dashboard.</p>
+        <p>Choose a calm palette and decide whether daily reflections appear on Today.</p>
       </section>
       <section className="compass-card">
         <h3>Theme</h3>
@@ -353,7 +270,7 @@ function SettingsPage({ theme, setTheme, reflectionsEnabled, setReflectionsEnabl
       <section className="compass-card settings-row">
         <div>
           <h3>Daily reflections</h3>
-          <p>Show one calm reflection on the Dashboard each day.</p>
+          <p>Show one calm reflection on Today each day.</p>
         </div>
         <button
           type="button"
@@ -524,34 +441,35 @@ export default function App() {
       </aside>
 
       <div className="app-shell">
-        <header className="app-topbar">
-          <div>
-            <p className="eyebrow">Medication taper planning workspace</p>
-            <h1>{WORKSPACES.find(item => item.id === activeTab)?.label || 'Dashboard'}</h1>
-          </div>
-          <div className="topbar-actions">
-            <button type="button" className="btn-secondary" onClick={() => setShowWizard(true)}>
-              Guided Setup
-            </button>
-          </div>
-        </header>
+        {activeTab !== 'dashboard' && (
+          <>
+            <header className="app-topbar">
+              <div>
+                <p className="eyebrow">Medication taper planning workspace</p>
+                <h1>{WORKSPACES.find(item => item.id === activeTab)?.label || 'Today'}</h1>
+              </div>
+              <div className="topbar-actions">
+                <button type="button" className="btn-secondary" onClick={() => setShowWizard(true)}>
+                  Guided Setup
+                </button>
+              </div>
+            </header>
 
-        <div className="disclaimer-banner">
-          <strong>Calculation tool only.</strong> COMPASS does not recommend taper schedules or
-          provide medical advice. Review all plans with an appropriate healthcare professional.
-        </div>
+            <div className="disclaimer-banner">
+              <strong>Calculation tool only.</strong> COMPASS does not recommend taper schedules or
+              provide medical advice. Review all plans with an appropriate healthcare professional.
+            </div>
+          </>
+        )}
 
         <main className="app-main">
           {activeTab === 'dashboard' && (
-            <Dashboard
+            <TodayOverview
               inputs={inputs}
               schedule={schedule}
-              reflectionsEnabled={reflectionsEnabled}
               continuity={continuity}
               todayCheckIn={todayCheckIn}
               onContinue={() => setShowTodayStep(true)}
-              onCalendar={() => setActiveTab('calendar')}
-              onGuide={() => setActiveTab('guide')}
             />
           )}
 
@@ -583,7 +501,7 @@ export default function App() {
               <div className="page-stack">
                 <section className="compass-card route-overview">
                   <div>
-                    <p className="eyebrow">Calendar</p>
+                    <p className="eyebrow">Route</p>
                     <h2>{routeStats.routeDays} days plotted toward {formatNumber(routeStats.targetDose)} mg.</h2>
                     <p>
                       The calculated route below keeps the original taper engine intact,
