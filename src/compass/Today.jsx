@@ -6,7 +6,8 @@ import {
 
 /**
  * Today — ground level. One purpose: receive the day's mark.
- * The screen is a sentence, not a layout.
+ * The screen is a sentence, not a layout. After the mark, the day's
+ * weather and note wait quietly below — a field journal, never a form.
  */
 
 function composeSentence(state) {
@@ -19,7 +20,9 @@ function composeSentence(state) {
     hour < 12 ? `${fmtDose(dose)} this morning.` : `${fmtDose(dose)}, same as yesterday.`;
 
   let phaseLine = '';
-  if (hold) {
+  if (state.pausedSince) {
+    phaseLine = 'Paused — the route waits. Resume from the map table whenever you’re ready.';
+  } else if (hold) {
     phaseLine = `Hold week — nothing changes until ${weekdayName(hold.endsOn)}.`;
   } else if (next) {
     const inDays = Math.max(0, Math.round((new Date(next.date) - new Date()) / 86400000));
@@ -70,6 +73,7 @@ function Daymark({ marked, onMark }) {
         aria-label={marked ? 'Day marked' : 'Press and hold to mark the day'}
       >
         <svg viewBox="0 0 64 64" aria-hidden="true">
+          <circle className="daymark__paper" cx="32" cy="32" r="29" />
           <circle className="daymark__ring" cx="32" cy="32" r="30" />
           <circle className="daymark__fill" cx="32" cy="32" r="28" />
         </svg>
@@ -96,7 +100,11 @@ export default function Today({ state, actions }) {
   const roughStretch = stormyRun(state) >= DIALS.STORMY_RUN_LENGTH;
   const [noteOpen, setNoteOpen] = useState(false);
   const [weatherOpen, setWeatherOpen] = useState(false);
-  const showWeather = weatherOpen || (evening && marked && !entry.weather);
+
+  // the day's record waits below the mark — visible once the day is
+  // sealed, or when the person reaches for it early
+  const showWeather = marked || weatherOpen || !!entry.weather;
+  const showNote = marked || noteOpen || !!entry.note;
 
   return (
     <div className="page">
@@ -109,8 +117,8 @@ export default function Today({ state, actions }) {
           <div className="voice--day">Day {day}</div>
           {marked ? (
             <div className="marked-sentence">
-              <p className="quiet">Marked.</p>
-              <p className="quiet">{evening ? 'Rest well.' : 'See you tomorrow.'}</p>
+              <p className="marked-primary">Marked.</p>
+              <p className="marked-secondary">{evening ? 'Rest well.' : 'See you tomorrow.'}</p>
             </div>
           ) : (
             <>
@@ -123,10 +131,8 @@ export default function Today({ state, actions }) {
         <Daymark marked={marked} onMark={actions.markToday} />
 
         {showWeather && (
-          <div>
-            {evening && marked && !entry.weather && (
-              <p className="voice quiet" style={{ fontSize: '1rem' }}>How did today sit with you?</p>
-            )}
+          <div className="day-section">
+            <div className="day-section__label">Today’s weather</div>
             <div className="weather-row">
               {DIALS.WEATHER_WORDS.map((w) => (
                 <button
@@ -138,28 +144,48 @@ export default function Today({ state, actions }) {
                 </button>
               ))}
             </div>
+            {!entry.weather && (
+              <div className="day-section__hint">A simple way to mark how the day felt.</div>
+            )}
           </div>
         )}
 
-        {noteOpen && (
-          <input
-            className="note-field"
-            autoFocus
-            placeholder="one line, if you want it"
-            defaultValue={entry.note || ''}
-            onBlur={(e) => actions.setNote(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); }}
-          />
+        {showNote && (
+          <div className="day-section">
+            <div className="day-section__label">Today’s note</div>
+            {noteOpen ? (
+              <div className="note-panel">
+                <textarea
+                  className="note-field"
+                  autoFocus
+                  rows={3}
+                  placeholder="a few lines, if you want them — this stays with today"
+                  defaultValue={entry.note || ''}
+                  onBlur={(e) => { actions.setNote(e.target.value); setNoteOpen(false); }}
+                />
+                <div className="note-panel__hint">saved when you tap away · kept with Day {day}</div>
+              </div>
+            ) : entry.note ? (
+              <>
+                <div className="note-display">{entry.note}</div>
+                <div className="day-section__tools">
+                  <button className="margin-link" onClick={() => setNoteOpen(true)}>edit note</button>
+                </div>
+              </>
+            ) : (
+              <div className="day-section__tools">
+                <button className="margin-link" onClick={() => setNoteOpen(true)}>add a note</button>
+              </div>
+            )}
+          </div>
         )}
 
-        <div className="margin-row" style={{ marginTop: '1.6rem' }}>
-          {!showWeather && (
+        {!showWeather && !showNote && (
+          <div className="margin-row" style={{ marginTop: '1.6rem' }}>
             <button className="margin-link" onClick={() => setWeatherOpen(true)}>weather</button>
-          )}
-          {!noteOpen && (
             <button className="margin-link" onClick={() => setNoteOpen(true)}>note</button>
-          )}
-        </div>
+          </div>
+        )}
 
         {roughStretch && (
           <div className="rough-stretch">
@@ -169,7 +195,7 @@ export default function Today({ state, actions }) {
 
         <div className="support-line">
           <button className="margin-link" onClick={actions.openSupport}>
-            Need steadying? →
+            Need support? →
           </button>
         </div>
       </div>

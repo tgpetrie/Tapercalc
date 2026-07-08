@@ -77,7 +77,10 @@ export default function Path({ state, onOpenPlanning }) {
   return (
     <div className="page path">
       <div className="path__header">
-        Day {g.todayDay}. {fmtDose(currentDose(state))}. {arrival && `Arrival ${arrival}, at your current pace.`}
+        Day {g.todayDay}. {fmtDose(currentDose(state))}.{' '}
+        {g.future.paused
+          ? 'Paused — the road ahead waits.'
+          : arrival && `Arrival ${arrival}, at your current pace.`}
       </div>
       <div className="path__subheader">touch the line — it remembers</div>
 

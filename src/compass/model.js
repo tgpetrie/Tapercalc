@@ -8,7 +8,9 @@
  * Nothing in here ever says "failed", "missed", or "off track".
  */
 
-import { generateSchedule } from '../utils/taperEngine.js';
+import {
+  projectRoute, normalizeStrategy, GENTLE_PACES,
+} from './route.js';
 
 // ── Design dials ────────────────────────────────────────────────────────────
 // The few numbers that define how Compass feels in the hand.
@@ -133,14 +135,29 @@ function seedState() {
 
 // ── Persistence ─────────────────────────────────────────────────────────────
 
+/**
+ * Older saved states predate the route builder. Fill in what's missing
+ * without touching anything the user already wrote.
+ */
+function migrate(state) {
+  const s = { ...state };
+  s.strategy = normalizeStrategy(s.strategy);
+  if (!s.doseSchedule) s.doseSchedule = ['morning'];
+  if (!s.routeHistory) s.routeHistory = [];
+  if (!s.celebrated) s.celebrated = [];
+  if (!s.medication) s.medication = 'Medication';
+  if (s.pausedSince === undefined) s.pausedSince = null;
+  return s;
+}
+
 export function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) return migrate(JSON.parse(raw));
   } catch { /* fall through to a fresh seed */ }
   const state = seedState();
   saveState(state);
-  return state;
+  return migrate(state);
 }
 
 export function saveState(state) {
@@ -185,48 +202,38 @@ export function activeHold(state, onISO = todayISO()) {
  * is always a sketch, never a record.
  */
 export function projectFuture(state, fromISO = todayISO(), strategyOverride = null) {
-  const strat = strategyOverride || state.strategy;
+  const strat = normalizeStrategy(strategyOverride || state.strategy);
+  const floor = Math.max(strat.targetDose || 0, DIALS.ARRIVAL_DOSE);
   const hold = activeHold(state, fromISO);
   const projectionStart = hold ? hold.endsOn : fromISO;
   const dose = currentDose(state, fromISO);
-  if (dose <= DIALS.ARRIVAL_DOSE) {
-    return { steps: [], arrivalISO: fromISO, projectionStart, reductionsRemaining: 0 };
+
+  // an unplanned pause: the road ahead waits, without judgment, until the
+  // person resumes. drafts still project, so the map table can show what
+  // resuming would look like.
+  if (state.pausedSince && !strategyOverride) {
+    return {
+      steps: [], arrivalISO: null, projectionStart,
+      reductionsRemaining: 0, horizonExceeded: false, paused: true,
+    };
   }
 
-  const schedule = generateSchedule({
-    doses: [{ tabletMg: dose, liquidMl: 0, mgPerMl: 0 }],
-    targetDose: 0,
-    strategy: strat.id,
-    frequency: 'custom',
-    customInterval: strat.intervalDays,
-    reductionAmount: strat.amount || 0,
-    reductionPercent: strat.percent || 0,
-    cutStrategy: 'firstFirst',
-    startDate: projectionStart,
-    maxDays: 1460,
-  });
-
-  const steps = [];
-  let arrivalISO = null;
-  for (const row of schedule) {
-    if (row.dailyReduction > 0) {
-      steps.push({ date: row.date, dose: row.totalDailyDose });
-    }
-    if (arrivalISO === null && row.totalDailyDose <= DIALS.ARRIVAL_DOSE) {
-      arrivalISO = row.date;
-    }
+  if (dose <= floor) {
+    return {
+      steps: [], arrivalISO: fromISO, projectionStart,
+      reductionsRemaining: 0, horizonExceeded: false,
+    };
   }
-  // Hyperbolic descents approach zero asymptotically; if the engine's horizon
-  // ran out before ARRIVAL_DOSE, the honest answer is "beyond the horizon".
-  const meaningfulSteps = arrivalISO
-    ? steps.filter(s => daysBetween(s.date, arrivalISO) >= 0)
-    : steps;
+
+  const r = projectRoute(dose, strat, projectionStart, floor);
   return {
-    steps: meaningfulSteps,
-    arrivalISO,
+    steps: r.steps,
+    arrivalISO: r.arrivalISO,
     projectionStart,
-    reductionsRemaining: meaningfulSteps.length,
-    horizonExceeded: arrivalISO === null,
+    reductionsRemaining: r.reductions,
+    // some curves approach the floor asymptotically; when the horizon runs
+    // out first, the honest answer is "beyond the horizon", never a date
+    horizonExceeded: r.arrivalISO === null,
   };
 }
 
@@ -416,6 +423,215 @@ export function commitStrategy(state, strategy) {
     ],
     strategy,
   };
+}
+
+export function setMedication(state, medication) {
+  return { ...state, medication };
+}
+
+export function setDoseSchedule(state, doseSchedule) {
+  return { ...state, doseSchedule };
+}
+
+/** Rewrite where the route began. Ink correction, not a new route. */
+export function editOrigin(state, { dose, date }) {
+  // the origin can't move past the next event — the line must stay a line
+  const limit = state.events[1]?.date ?? todayISO();
+  const safeDate = date && daysBetween(date, limit) >= 0 ? date : null;
+  const events = state.events.map((e, i) =>
+    i === 0 ? { ...e, dose: dose ?? e.dose, date: safeDate ?? e.date } : e
+  );
+  return { ...state, events, startDate: safeDate ?? state.startDate };
+}
+
+/**
+ * Today's actual dose differs from the record — set it right.
+ * An adjustment is a fact, never a verdict; the pencil redraws from here.
+ */
+export function adjustDoseToday(state, mg, note = '') {
+  const iso = todayISO();
+  const events = state.events.filter(e => !(e.kind === 'adjust' && e.date === iso));
+  return {
+    ...state,
+    events: [...events, {
+      kind: 'adjust', dose: mg, date: iso,
+      day: dayNumber(state), ...(note ? { note } : {}),
+    }],
+  };
+}
+
+/** A rest point beginning today, at today's dose. Part of the route. */
+export function addRestPoint(state, lengthDays) {
+  const iso = todayISO();
+  return {
+    ...state,
+    events: [...state.events, {
+      kind: 'hold', dose: currentDose(state), date: iso,
+      day: dayNumber(state), lengthDays,
+      note: `Rest point — ${lengthDays} days.`,
+    }],
+  };
+}
+
+// ── Journal reading ─────────────────────────────────────────────────────────
+
+/** Every day with something in it, newest first — for the Journal shelf. */
+export function journalEntries(state) {
+  return Object.keys(state.journal)
+    .sort()
+    .reverse()
+    .map(iso => ({ iso, ...state.journal[iso] }))
+    .filter(e => e.marked || e.weather || e.note);
+}
+
+/** How today's dose is split across the day, in mg. Even shares. */
+export function doseParts(state) {
+  const times = state.doseSchedule || ['morning'];
+  const dose = currentDose(state);
+  const share = Math.round((dose / times.length) * 100) / 100;
+  return times.map((label, i) => ({
+    label,
+    // the last part absorbs rounding so the parts always sum to the dose
+    mg: i === times.length - 1
+      ? Math.round((dose - share * (times.length - 1)) * 100) / 100
+      : share,
+  }));
+}
+
+// ── The route helper: plain words in, draft routes out ─────────────────────
+// Reads a sentence like "I'm at 28 mg and want to reduce about 2% per month
+// with holds when things get hard" and sketches three drafts. No advice —
+// drafts to look at, and to bring to a prescriber.
+
+export function parseRouteWish(text) {
+  const t = (text || '').toLowerCase();
+  const wish = {};
+
+  const pct = t.match(/(\d+(?:\.\d+)?)\s*(?:%|percent)/);
+  if (pct) wish.percent = parseFloat(pct[1]);
+
+  const amt = t.match(/(?:by|reduce|drop|cut)[^.\d]*(\d+(?:\.\d+)?)\s*mg/);
+  if (amt && !pct) wish.amount = parseFloat(amt[1]);
+
+  const every = t.match(/every\s+(\d+(?:\.\d+)?)\s*(day|week|month)/);
+  if (every) {
+    const n = parseFloat(every[1]);
+    wish.intervalDays = Math.round(every[2] === 'day' ? n : every[2] === 'week' ? n * 7 : n * 30);
+  } else if (/per\s+month|a\s+month|monthly/.test(t)) {
+    wish.intervalDays = 30;
+  } else if (/per\s+week|a\s+week|weekly/.test(t)) {
+    wish.intervalDays = 7;
+  } else if (/fortnight/.test(t)) {
+    wish.intervalDays = 14;
+  }
+
+  wish.wantsHolds = /hold|rest|pause|break|when things get hard/.test(t);
+  wish.wantsGentle = /slow|gentle|careful|cautious|easy|conservative/.test(t);
+  return wish;
+}
+
+const round2 = n => Math.round(n * 100) / 100;
+
+/**
+ * Draft route shapes from a wish. Always drafts, never advice — options
+ * to look at and to bring to a prescriber or care team.
+ */
+export function draftRoutes(state, text) {
+  const wish = parseRouteWish(text);
+  const dose = currentDose(state);
+  const base = normalizeStrategy(state.strategy);
+  const basePct = wish.percent
+    ?? (wish.amount && dose > 0 ? round2((wish.amount / dose) * 100) : null)
+    ?? base.percent ?? 9;
+  const baseInterval = wish.intervalDays ?? base.intervalDays ?? 21;
+
+  const drafts = [
+    {
+      id: 'steady',
+      label: 'Steady percentage draft',
+      strategy: {
+        ...base, shape: 'percent', percent: basePct, intervalDays: baseInterval,
+        distribution: 'step', initialHoldDays: 0,
+        restEvery: wish.wantsHolds ? 3 : 0, restLengthDays: 28,
+      },
+      why: wish.wantsHolds
+        ? 'Each cut a share of the current dose, so the cuts shrink as you descend — with a planned rest point every three cuts.'
+        : 'Each cut a share of the current dose, so the cuts shrink as you descend.',
+    },
+    {
+      id: 'micro',
+      label: 'Smaller-step draft',
+      strategy: {
+        ...base, shape: 'percent', percent: basePct, intervalDays: baseInterval,
+        distribution: 'micro', initialHoldDays: 0, restEvery: 0,
+      },
+      why: 'The same overall pace, spread into small weekly slices. The stairs become a ramp; the destination doesn’t change.',
+    },
+    {
+      id: 'holdFirst',
+      label: 'Hold-first draft',
+      strategy: {
+        ...base, shape: 'percent',
+        percent: Math.max(1, round2(basePct / 2)),
+        intervalDays: 14, distribution: 'step',
+        initialHoldDays: 28, restEvery: 0,
+      },
+      why: 'Stays level for four weeks first, then begins smaller, more frequent steps. Room to settle before anything moves.',
+    },
+  ];
+
+  // a wish for gentleness adds a fourth shape: the soft curve
+  if (wish.wantsGentle) {
+    drafts.push({
+      id: 'gentle',
+      label: 'Gentle curve draft',
+      strategy: {
+        ...base, shape: 'gentle', pace: 'verySlow',
+        intervalDays: Math.max(baseInterval, 28), distribution: 'step',
+        initialHoldDays: 0, restEvery: 0, minCut: 0.05,
+      },
+      why: 'The lower the dose gets, the smaller the steps become. The slowest shape Compass draws.',
+    });
+  }
+  return { wish, drafts };
+}
+
+// ── Pause & resume — the route can wait ─────────────────────────────────────
+
+/** An unplanned pause: reductions stop until the person resumes.
+ *  The route waits; nothing about the past changes. */
+export function pauseRoute(state) {
+  return { ...state, pausedSince: todayISO() };
+}
+
+/** Resuming redraws the road ahead from today's actual dose. */
+export function resumeRoute(state) {
+  return { ...state, pausedSince: null };
+}
+
+/** The first cut a strategy would take from here, in mg. */
+export function firstCutOf(state, strategy) {
+  const s = normalizeStrategy(strategy);
+  const dose = currentDose(state);
+  if (s.shape === 'linear') return s.amount;
+  const pct = s.shape === 'gentle' ? (GENTLE_PACES[s.pace]?.percent ?? 5) : s.percent;
+  return round2(dose * (pct / 100));
+}
+
+/** One plain sentence describing a strategy's pace. */
+export function paceSentence(state, strategy) {
+  const s = normalizeStrategy(strategy);
+  const d = s.intervalDays;
+  const rhythm =
+    d % 30 === 0 ? (d === 30 ? 'month' : `${d / 30} months`)
+    : d % 7 === 0 ? (d === 7 ? 'week' : `${d / 7} weeks`)
+    : `${d} days`;
+  const micro = s.distribution === 'micro'
+    ? ', spread into small weekly slices' : '';
+  if (s.shape === 'linear') {
+    return `Reduce by ${fmtDose(s.amount)} every ${rhythm}${micro}.`;
+  }
+  return `Reduce by about ${fmtDose(firstCutOf(state, s))} every ${rhythm} at first, then smaller${micro}.`;
 }
 
 export function exportEverything(state) {

@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { STARTER_RESOURCES } from '../data/resources.js';
+import { journalEntries, prettyDate, dayNumber } from './model.js';
 
 /**
- * Library — the field guide in your pack. A shelf, organized by the
- * question you arrived with. Shelves wait; they never badge or update
- * themselves in your face.
+ * Library — the field guide in your pack, and now the journal beside it.
+ * A shelf, organized by the question you arrived with. Shelves wait;
+ * they never badge or update themselves in your face.
  */
 
 const SECTIONS = [
@@ -61,6 +62,39 @@ const SECTIONS = [
   },
 ];
 
+const PAGE = 30;
+
+function Journal({ state, onBack }) {
+  const entries = journalEntries(state);
+  const [shown, setShown] = useState(PAGE);
+  return (
+    <div className="reading">
+      <button className="back-link" onClick={onBack}>← the shelf</button>
+      <h2>Journal</h2>
+      <p>
+        Every day you marked, in your own hand. Weather and notes stay with their days.
+      </p>
+      <ul className="journal">
+        {entries.slice(0, shown).map(e => (
+          <li key={e.iso} className="journal__day">
+            <div className="journal__date">
+              {prettyDate(e.iso)}
+              <span className="journal__daynum"> · day {dayNumber(state, e.iso)}</span>
+              {e.weather && <span className={`journal__weather is-${e.weather}`}>{e.weather}</span>}
+            </div>
+            {e.note && <div className="journal__note">“{e.note}”</div>}
+          </li>
+        ))}
+      </ul>
+      {entries.length > shown && (
+        <button className="margin-link" onClick={() => setShown(shown + PAGE)}>
+          earlier days →
+        </button>
+      )}
+    </div>
+  );
+}
+
 function Section({ section, onBack }) {
   const resources = STARTER_RESOURCES.filter(r => section.categories.includes(r.category));
   return (
@@ -78,16 +112,27 @@ function Section({ section, onBack }) {
   );
 }
 
-export default function Library({ openSection, onOpenSection }) {
+export default function Library({ state, openSection, onOpenSection }) {
   const section = SECTIONS.find(s => s.id === openSection);
+  const noteCount = journalEntries(state).filter(e => e.note).length;
   return (
     <div className="page library">
-      {section ? (
+      {openSection === 'journal' ? (
+        <Journal state={state} onBack={() => onOpenSection(null)} />
+      ) : section ? (
         <Section section={section} onBack={() => onOpenSection(null)} />
       ) : (
         <>
           <h1>Library</h1>
           <ul className="shelf">
+            <li>
+              <button onClick={() => onOpenSection('journal')}>
+                Journal
+                <span className="shelf__hint">
+                  your days, weather, and notes{noteCount > 0 ? ` — ${noteCount} ${noteCount === 1 ? 'note' : 'notes'} so far` : ''}
+                </span>
+              </button>
+            </li>
             {SECTIONS.map(s => (
               <li key={s.id}>
                 <button onClick={() => onOpenSection(s.id)}>

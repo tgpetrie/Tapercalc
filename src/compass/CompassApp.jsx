@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import {
   loadState, saveState, markDay, setWeather, setNote, commitStrategy,
-  claimMilestones,
+  claimMilestones, setMedication, setDoseSchedule, editOrigin,
+  adjustDoseToday, addRestPoint, pauseRoute, resumeRoute,
 } from './model.js';
 import Today from './Today.jsx';
 import Celebration from './Celebration.jsx';
@@ -13,7 +14,7 @@ import './compass.css';
 
 /**
  * Compass — one object, four altitudes.
- * Today (ground) · Path (hilltop) · Map table (a mode, not a place) ·
+ * Today (ground) · Path (hilltop) · Plan (the map table) ·
  * Library (the pack) · Settings (a door).
  */
 
@@ -35,7 +36,6 @@ function TodaySliver() {
 export default function CompassApp() {
   const [state, setState] = useState(loadState);
   const [tab, setTab] = useState('today');
-  const [planning, setPlanning] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [librarySection, setLibrarySection] = useState(null);
   const [celebrating, setCelebrating] = useState(null);
@@ -47,8 +47,8 @@ export default function CompassApp() {
   }, [state.theme]);
 
   useEffect(() => {
-    document.documentElement.dataset.mode = planning ? 'planning' : 'living';
-  }, [planning]);
+    document.documentElement.dataset.mode = tab === 'plan' ? 'planning' : 'living';
+  }, [tab]);
 
   const actions = {
     markToday: () => {
@@ -63,10 +63,16 @@ export default function CompassApp() {
     setWeather: (w) => setState(s => setWeather(s, w)),
     setNote: (n) => setState(s => setNote(s, n)),
     commitStrategy: (strat) => setState(s => commitStrategy(s, strat)),
+    setMedication: (name) => setState(s => setMedication(s, name)),
+    setDoseSchedule: (times) => setState(s => setDoseSchedule(s, times)),
+    editOrigin: (patch) => setState(s => editOrigin(s, patch)),
+    adjustDoseToday: (mg) => setState(s => adjustDoseToday(s, mg)),
+    addRestPoint: (days) => setState(s => addRestPoint(s, days)),
+    pauseRoute: () => setState(s => pauseRoute(s)),
+    resumeRoute: () => setState(s => resumeRoute(s)),
     setReminderHour: (h) => setState(s => ({ ...s, reminderHour: h })),
     setTheme: (t) => setState(s => ({ ...s, theme: t })),
     openSupport: () => {
-      setPlanning(false);
       setSettingsOpen(false);
       setLibrarySection('support');
       setTab('library');
@@ -74,9 +80,7 @@ export default function CompassApp() {
   };
 
   let surface;
-  if (planning) {
-    surface = <MapTable state={state} actions={actions} onClose={() => setPlanning(false)} />;
-  } else if (settingsOpen) {
+  if (settingsOpen) {
     surface = <Settings state={state} actions={actions} onClose={() => setSettingsOpen(false)} />;
   } else if (tab === 'today') {
     surface = (
@@ -86,9 +90,11 @@ export default function CompassApp() {
       </>
     );
   } else if (tab === 'path') {
-    surface = <Path state={state} onOpenPlanning={() => setPlanning(true)} />;
+    surface = <Path state={state} onOpenPlanning={() => setTab('plan')} />;
+  } else if (tab === 'plan') {
+    surface = <MapTable state={state} actions={actions} />;
   } else {
-    surface = <Library openSection={librarySection} onOpenSection={setLibrarySection} />;
+    surface = <Library state={state} openSection={librarySection} onOpenSection={setLibrarySection} />;
   }
 
   return (
@@ -103,9 +109,9 @@ export default function CompassApp() {
         />
       )}
 
-      {!planning && !settingsOpen && (
+      {!settingsOpen && (
         <nav className="tabbar" aria-label="Compass">
-          {[['today', 'Today'], ['path', 'Path'], ['library', 'Library']].map(([id, label]) => (
+          {[['today', 'Today'], ['path', 'Path'], ['plan', 'Plan'], ['library', 'Library']].map(([id, label]) => (
             <button
               key={id}
               className={tab === id ? 'is-active' : ''}
