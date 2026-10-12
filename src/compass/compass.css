@@ -1255,3 +1255,10 @@ body {
 .wx .wx__fill { fill: var(--wx-fill, var(--paper)); }
 .wx .wx__dot { fill: currentColor; stroke: none; }
 .wx .wx__face { stroke-width: 1.2; }
+
+.resource-filter { display: flex; flex-direction: column; gap: 0.6rem; margin: 1rem 0 1.2rem; }
+.resource-filter input, .resource-filter select {
+  font: inherit; font-size: 0.95rem; color: var(--ink);
+  background: var(--paper-raised); border: 1px solid var(--hairline);
+  border-radius: 8px; padding: 0.6rem 0.75rem; width: 100%;
+}

@@ -1,6 +1,6 @@
 import WeatherIcon from './WeatherIcon.jsx';
 import React, { useState } from 'react';
-import { STARTER_RESOURCES } from '../data/resources.js';
+import { STARTER_RESOURCES, RESOURCE_CATEGORIES, filterResources } from '../data/resources.js';
 import { journalEntries, prettyDate, dayNumber } from './model.js';
 
 /**
@@ -101,6 +101,37 @@ function Journal({ state, onBack }) {
   );
 }
 
+function AllResources({ onBack }) {
+  const [query, setQuery] = useState('');
+  const [category, setCategory] = useState('All');
+  const list = filterResources(STARTER_RESOURCES, query, category);
+  return (
+    <div className="reading">
+      <button className="back-link" onClick={onBack}>← the shelf</button>
+      <h2>All resources</h2>
+      <p>
+        Educational and supportive; they don’t replace medical care or emergency services.
+        If you are in crisis, call or text 988 (US).
+      </p>
+      <div className="resource-filter">
+        <input type="search" value={query} placeholder="Search" aria-label="Search resources"
+          onChange={(e) => setQuery(e.target.value)} />
+        <select value={category} aria-label="Filter by category" onChange={(e) => setCategory(e.target.value)}>
+          <option value="All">All categories</option>
+          {RESOURCE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+      </div>
+      {list.length === 0 && <p className="resource__desc">Nothing matches that. Try fewer words.</p>}
+      {list.map(r => (
+        <div className="resource" key={r.id}>
+          <a href={r.url} target="_blank" rel="noreferrer">{r.title}</a>
+          <div className="resource__desc">{r.category} · {r.description}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function Section({ section, onBack }) {
   const resources = STARTER_RESOURCES.filter(r => section.categories.includes(r.category));
   return (
@@ -125,6 +156,8 @@ export default function Library({ state, openSection, onOpenSection }) {
     <div className="page library">
       {openSection === 'journal' ? (
         <Journal state={state} onBack={() => onOpenSection(null)} />
+      ) : openSection === 'all' ? (
+        <AllResources onBack={() => onOpenSection(null)} />
       ) : section ? (
         <Section section={section} onBack={() => onOpenSection(null)} />
       ) : (
@@ -137,6 +170,12 @@ export default function Library({ state, openSection, onOpenSection }) {
                 <span className="shelf__hint">
                   your days, weather, and notes{noteCount > 0 ? ` — ${noteCount} ${noteCount === 1 ? 'note' : 'notes'} so far` : ''}
                 </span>
+              </button>
+            </li>
+            <li>
+              <button onClick={() => onOpenSection('all')}>
+                All resources
+                <span className="shelf__hint">search everything in the library — {STARTER_RESOURCES.length} so far</span>
               </button>
             </li>
             {SECTIONS.map(s => (
