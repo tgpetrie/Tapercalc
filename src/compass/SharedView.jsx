@@ -18,7 +18,7 @@ export default function SharedView({ token }) {
   if (!data) {
     return (
       <div className="compass"><main className="page welcome">
-        <div className="welcome__brand"><Logo size={44} animate /><span className="welcome__mark">Compass</span></div>
+        <header className="welcome__brand"><Logo size={40} /><span className="welcome__mark">Compass</span></header>
         <h1 className="welcome__title">This link isn’t active.</h1>
         <p className="welcome__lede">
           The person who shared it may have stopped sharing. Ask them for a new link if you need one.
