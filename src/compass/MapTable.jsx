@@ -32,6 +32,66 @@ function arrivalWord(future) {
     : future.arrivalISO ? `around ${seasonOf(future.arrivalISO)}` : '—';
 }
 
+/**
+ * The route shapes, each drawn as the same descent: same start, same end,
+ * same number of days. Only the shape of the steps changes between cards,
+ * so the drawings can be told apart at a glance. The dashed line is a
+ * straight run from start to end, for comparison.
+ */
+const SHAPE_STEPS = { linear: 6, percent: 6, gentle: 9 };
+
+function stairs(shape) {
+  const steps = SHAPE_STEPS[shape];
+  const W = 96, H = 60, padX = 6, padY = 8;
+  const top = 1, bottom = 0.03;
+  const val = (i) => (shape === 'linear'
+    ? top - (i * (top - bottom)) / steps
+    : top * Math.pow(bottom / top, i / steps));
+  const x = (i) => padX + (i * (W - 2 * padX)) / steps;
+  const y = (v) => padY + (1 - v) * (H - 2 * padY);
+  let d = `M ${x(0)} ${y(val(0))}`;
+  for (let i = 1; i <= steps; i++) d += ` H ${x(i)} V ${y(val(i))}`;
+  return { d, W, H, start: [x(0), y(val(0))], end: [x(steps), y(val(steps))] };
+}
+
+function MethodArt({ shape }) {
+  const a = stairs(shape);
+  return (
+    <svg className="method__art" viewBox={`0 0 ${a.W} ${a.H}`} aria-hidden="true">
+      <line className="method__base" x1="4" y1={a.H - 6} x2={a.W - 4} y2={a.H - 6} />
+      {shape !== 'linear' && (
+        <line className="method__ref" x1={a.start[0]} y1={a.start[1]} x2={a.end[0]} y2={a.end[1]} />
+      )}
+      <path className="method__line" d={a.d} />
+      <circle className="method__dot" cx={a.start[0]} cy={a.start[1]} r="2.6" />
+    </svg>
+  );
+}
+
+const METHODS = [
+  {
+    shape: 'percent',
+    name: 'Hyperbolic',
+    hint: 'Each cut is a share of what is left, so the steps shrink as you descend.',
+  },
+  {
+    shape: 'linear',
+    name: 'Linear',
+    hint: 'The same amount comes off every time.',
+  },
+  {
+    shape: 'gentle',
+    name: 'Gentle curve',
+    hint: 'A soft curve that slows further as the dose gets low.',
+  },
+];
+
+/** The real first step for this shape, from the dose you are on today. */
+function methodFigure(state, draft, shape) {
+  if (shape === 'linear') return `${fmtDose(draft.amount)} every time`;
+  return `first cut ${fmtDose(firstCutOf(state, { ...draft, shape }))}, then smaller`;
+}
+
 /** A labeled row on the table: a fact of the route, quietly editable. */
 function Fact({ label, children }) {
   return (
@@ -327,27 +387,23 @@ export default function MapTable({ state, actions }) {
 
         {/* the shape of the descent */}
         <div className="method-row" role="radiogroup" aria-label="Route shape">
-          <button
-            className={`method ${draft.shape === 'percent' ? 'is-chosen' : ''}`}
-            onClick={() => setDraft({ ...draft, shape: 'percent' })}
-          >
-            a share of the current dose
-            <span className="method__hint">cuts shrink as you descend</span>
-          </button>
-          <button
-            className={`method ${draft.shape === 'linear' ? 'is-chosen' : ''}`}
-            onClick={() => setDraft({ ...draft, shape: 'linear' })}
-          >
-            the same amount each time
-            <span className="method__hint">a fixed step, a fixed rhythm</span>
-          </button>
-          <button
-            className={`method ${draft.shape === 'gentle' ? 'is-chosen' : ''}`}
-            onClick={() => setDraft({ ...draft, shape: 'gentle' })}
-          >
-            a gentle curve
-            <span className="method__hint">the lower it gets, the smaller the steps</span>
-          </button>
+          {METHODS.map(m => (
+            <button
+              key={m.shape}
+              type="button"
+              role="radio"
+              aria-checked={draft.shape === m.shape}
+              className={`method ${draft.shape === m.shape ? 'is-chosen' : ''}`}
+              onClick={() => setDraft({ ...draft, shape: m.shape })}
+            >
+              <MethodArt shape={m.shape} />
+              <span className="method__body">
+                <span className="method__name">{m.name}</span>
+                <span className="method__hint">{m.hint}</span>
+                <span className="method__figure">{methodFigure(state, draft, m.shape)}</span>
+              </span>
+            </button>
+          ))}
         </div>
 
         {draft.shape === 'percent' && (

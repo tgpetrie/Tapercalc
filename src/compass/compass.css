@@ -834,16 +834,18 @@ body {
 .facts__note { font-size: 0.84rem; color: var(--ink-soft); margin: 0.7rem 0 0; }
 
 /* the shapes of descent */
-.method-row { display: flex; gap: 0.8rem; margin: 1.8rem 0 0.4rem; flex-wrap: wrap; }
+.method-row { display: flex; flex-direction: column; gap: 0.7rem; margin: 1.8rem 0 0.4rem; }
 
 .method {
-  flex: 1;
-  min-width: 10.5rem;
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 1fr);
+  align-items: center;
+  gap: 1rem;
   text-align: left;
   background: none;
   border: 1px solid var(--hairline);
   border-radius: 10px;
-  padding: 0.7rem 0.9rem;
+  padding: 0.8rem 1rem 0.8rem 0.8rem;
   font: inherit;
   font-size: 0.88rem;
   color: var(--ink-soft);
@@ -852,6 +854,7 @@ body {
 }
 
 .method:hover { border-color: var(--pencil); }
+.method:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .method.is-chosen {
   border-color: var(--accent);
@@ -860,13 +863,42 @@ body {
   background: var(--paper-raised);
 }
 
-.method.is-chosen .method__hint { color: var(--accent); }
+/* each shape's drawing: ink for the descent, pencil for the straight comparison */
+.method__art { display: block; width: 100%; height: auto; }
+.method__base { stroke: var(--hairline); stroke-width: 1; }
+.method__ref { stroke: var(--pencil); stroke-width: 1; stroke-dasharray: 2 3; }
+.method__line {
+  fill: none;
+  stroke: var(--ink-soft);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.method__dot { fill: var(--pencil); }
+.method.is-chosen .method__line { stroke: var(--accent); }
+.method.is-chosen .method__dot { fill: var(--accent); }
+
+.method__body { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+
+.method__name {
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  color: var(--ink);
+}
 
 .method__hint {
-  display: block;
-  font-size: 0.76rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
   color: var(--ink-faint);
+}
+
+.method.is-chosen .method__hint { color: var(--ink-soft); }
+
+.method__figure {
   margin-top: 0.15rem;
+  font-size: 0.78rem;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
 }
 
 .maptable__tools {
