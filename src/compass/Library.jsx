@@ -1,3 +1,4 @@
+import WeatherIcon from './WeatherIcon.jsx';
 import React, { useState } from 'react';
 import { STARTER_RESOURCES } from '../data/resources.js';
 import { journalEntries, prettyDate, dayNumber } from './model.js';
@@ -80,7 +81,12 @@ function Journal({ state, onBack }) {
             <div className="journal__date">
               {prettyDate(e.iso)}
               <span className="journal__daynum"> · day {dayNumber(state, e.iso)}</span>
-              {e.weather && <span className={`journal__weather is-${e.weather}`}>{e.weather}</span>}
+              {e.weather && (
+                <span className={`journal__weather is-${e.weather}`}>
+                  <WeatherIcon kind={e.weather} size={22} />
+                  {e.weather}
+                </span>
+              )}
             </div>
             {e.note && <div className="journal__note">“{e.note}”</div>}
           </li>

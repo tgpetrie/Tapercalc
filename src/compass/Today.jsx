@@ -1,3 +1,4 @@
+import WeatherIcon from './WeatherIcon.jsx';
 import React, { useRef, useState } from 'react';
 import {
   DIALS, todayISO, fmtDose, dayNumber, currentDose, activeHold,
@@ -140,7 +141,8 @@ export default function Today({ state, actions }) {
                   className={`weather-word ${entry.weather === w ? 'is-chosen' : ''}`}
                   onClick={() => actions.setWeather(entry.weather === w ? null : w)}
                 >
-                  {w}
+                  <WeatherIcon kind={w} size={36} />
+                  <span>{w}</span>
                 </button>
               ))}
             </div>

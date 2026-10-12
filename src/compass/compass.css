@@ -405,9 +405,11 @@ body {
 
 .weather-word {
   font: inherit;
-  font-size: 0.875rem;
-  padding: 0.35rem 0.9rem;
-  border-radius: 999px;
+  font-size: 0.8rem;
+  display: flex; flex-direction: column; align-items: center; gap: 0.2rem;
+  min-width: 4.1rem;
+  padding: 0.5rem 0.6rem 0.4rem;
+  border-radius: 14px;
   border: 1px solid var(--pencil);
   background: transparent;
   color: var(--ink-soft);
@@ -419,6 +421,7 @@ body {
 
 /* chosen weather is an ink mark on the page, not a form state */
 .weather-word.is-chosen {
+  --wx-fill: var(--ink);
   border-color: var(--ink);
   color: var(--paper);
   background: var(--ink);
@@ -980,9 +983,10 @@ body {
 .journal__daynum { color: var(--ink-faint); }
 
 .journal__weather {
+  display: inline-flex; align-items: center; gap: 0.3rem; vertical-align: middle;
   margin-left: 0.7rem;
   font-size: 0.74rem;
-  padding: 0.08rem 0.55rem;
+  padding: 0.04rem 0.6rem 0.04rem 0.3rem;
   border: 1px solid var(--pencil);
   border-radius: 999px;
   color: var(--ink-soft);
@@ -1236,3 +1240,18 @@ body {
 [data-theme=night] .welcome__error { color: #e0a090; }
 
 .welcome__links { display: flex; flex-direction: column; align-items: flex-start; gap: 0.1rem; margin-top: 0.4rem; }
+
+/* ── Weather drawings: tiny, black and white ────────────────────────────── */
+
+.wx {
+  display: block;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.wx .wx__fill { fill: var(--wx-fill, var(--paper)); }
+.wx .wx__dot { fill: currentColor; stroke: none; }
+.wx .wx__face { stroke-width: 1.2; }
