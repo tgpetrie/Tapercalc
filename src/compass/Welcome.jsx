@@ -1,3 +1,4 @@
+import Logo from './Logo.jsx';
 import React, { useState } from 'react';
 import { signUp, signIn, sendReset, setNewPassword, friendly } from './auth.js';
 
@@ -52,7 +53,7 @@ export default function Welcome({ initialMode = 'home', onGuest, onSample, notic
   if (mode === 'home') {
     return (
       <main className="page welcome">
-        <p className="welcome__mark">Compass</p>
+        <div className="welcome__brand"><Logo size={44} animate /><span className="welcome__mark">Compass</span></div>
         <h1 className="welcome__title">A quiet place to keep a taper.</h1>
         <p className="welcome__lede">
           Draw your route, mark each day, and watch the path take shape. The past stays as

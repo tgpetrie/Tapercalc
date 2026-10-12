@@ -1,3 +1,4 @@
+import Logo from './Logo.jsx';
 import React, { useState } from 'react';
 
 /**
@@ -13,12 +14,18 @@ export default function Setup({ onDone, identity }) {
 
   return (
     <main className="page welcome">
-      <p className="welcome__mark">Compass</p>
+      <div className="welcome__brand"><Logo size={44} animate /><span className="welcome__mark">Compass</span></div>
       <h1 className="welcome__title">Where are you setting out from?</h1>
       <p className="welcome__lede">
         Two things to start. You can change either later, and the route is only a draft
         until you decide otherwise.
       </p>
+
+      <ol className="welcome__how">
+        <li><strong>Mark the day.</strong> Once a day, hold the circle (or tap the button under it).</li>
+        <li><strong>See the path.</strong> Ink shows where you’ve been; pencil is a gentle guess ahead.</li>
+        <li><strong>Redraw any time.</strong> You decide changes with your prescriber — Compass just keeps the record.</li>
+      </ol>
 
       <form className="welcome__form" onSubmit={(e) => { e.preventDefault(); if (ok) onDone({ medication: medication.trim(), dose: doseNum }); }}>
         <label className="welcome__field">

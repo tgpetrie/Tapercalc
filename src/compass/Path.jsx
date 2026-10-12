@@ -48,6 +48,7 @@ function captionFor(state, g, day) {
 export default function Path({ state, onOpenPlanning }) {
   const g = useMemo(() => buildGeometry(state), [state]);
   const [caption, setCaption] = useState(null);
+  const [pick, setPick] = useState(g.todayDay);
 
   const runs = useMemo(() => journalRuns(state, g), [state, g]);
   const nowX = g.doseToX(currentDose(state));
@@ -84,9 +85,28 @@ export default function Path({ state, onOpenPlanning }) {
       </div>
       <div className="path__subheader">touch the line — it remembers</div>
 
+      <label className="path__pick">
+        <span>Look at a day</span>
+        <input
+          type="range"
+          min="1"
+          max={g.todayDay + 120}
+          value={pick}
+          aria-valuetext={`Day ${pick}`}
+          onChange={(e) => {
+            const d = parseInt(e.target.value, 10);
+            setPick(d);
+            setCaption(captionFor(state, g, d));
+          }}
+        />
+        <small>Day {pick}{pick === g.todayDay ? ' · today' : pick > g.todayDay ? ' · ahead, in pencil' : ''}</small>
+      </label>
+
       <div className="path__svg-wrap">
         <svg
           className="path__svg"
+          role="img"
+          aria-label={`Your route: day ${g.todayDay}, ${fmtDose(currentDose(state))} today. Use the Look at a day slider to hear about any day.`}
           viewBox={`0 0 ${W} ${g.height}`}
           onPointerDown={scrub}
           onPointerMove={(e) => { if (e.buttons || e.pointerType === 'mouse') scrub(e); }}
@@ -176,7 +196,7 @@ export default function Path({ state, onOpenPlanning }) {
         </svg>
 
         {caption && (
-          <div className="path-caption" onClick={() => setCaption(null)}>
+          <div className="path-caption" role="status" aria-live="polite" onClick={() => setCaption(null)}>
             <div className="path-caption__date">{caption.date}</div>
             {caption.text}
           </div>

@@ -1,4 +1,5 @@
 import WeatherIcon from './WeatherIcon.jsx';
+import Summary from './Summary.jsx';
 import React, { useState } from 'react';
 import { STARTER_RESOURCES, RESOURCE_CATEGORIES, filterResources } from '../data/resources.js';
 import { journalEntries, prettyDate, dayNumber } from './model.js';
@@ -132,13 +133,16 @@ function AllResources({ onBack }) {
   );
 }
 
-function Section({ section, onBack }) {
+function Section({ section, onBack, onOpenSection }) {
   const resources = STARTER_RESOURCES.filter(r => section.categories.includes(r.category));
   return (
     <div className="reading">
       <button className="back-link" onClick={onBack}>← the shelf</button>
       <h2>{section.title}</h2>
       <p>{section.intro}</p>
+      {section.id === 'prescriber' && (
+        <button className="door" onClick={() => onOpenSection('summary')}>make a one-page summary</button>
+      )}
       {resources.map(r => (
         <div className="resource" key={r.id}>
           <a href={r.url} target="_blank" rel="noreferrer">{r.title}</a>
@@ -156,10 +160,12 @@ export default function Library({ state, openSection, onOpenSection }) {
     <div className="page library">
       {openSection === 'journal' ? (
         <Journal state={state} onBack={() => onOpenSection(null)} />
+      ) : openSection === 'summary' ? (
+        <Summary state={state} onBack={() => onOpenSection(null)} />
       ) : openSection === 'all' ? (
         <AllResources onBack={() => onOpenSection(null)} />
       ) : section ? (
-        <Section section={section} onBack={() => onOpenSection(null)} />
+        <Section section={section} onBack={() => onOpenSection(null)} onOpenSection={onOpenSection} />
       ) : (
         <>
           <h1>Library</h1>
@@ -170,6 +176,12 @@ export default function Library({ state, openSection, onOpenSection }) {
                 <span className="shelf__hint">
                   your days, weather, and notes{noteCount > 0 ? ` — ${noteCount} ${noteCount === 1 ? 'note' : 'notes'} so far` : ''}
                 </span>
+              </button>
+            </li>
+            <li>
+              <button onClick={() => onOpenSection('summary')}>
+                One-page summary
+                <span className="shelf__hint">your record on a single page, to print or bring to an appointment</span>
               </button>
             </li>
             <li>

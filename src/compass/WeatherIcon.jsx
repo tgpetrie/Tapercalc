@@ -33,9 +33,11 @@ const DRAW = {
   clear: (
     <>
       <circle cx="16" cy="16" r="6" className="wx__fill" />
-      {[0, 45, 90, 135, 180, 225, 270, 315].map((a) => (
-        <line key={a} x1="16" y1="5.2" x2="16" y2="7.8" transform={`rotate(${a} 16 16)`} />
-      ))}
+      <g className="wx__rays">
+        {[0, 45, 90, 135, 180, 225, 270, 315].map((a) => (
+          <line key={a} x1="16" y1="5.2" x2="16" y2="7.8" transform={`rotate(${a} 16 16)`} />
+        ))}
+      </g>
       <Face x={16} y={15.2} mood="happy" />
     </>
   ),
@@ -53,15 +55,15 @@ const DRAW = {
     <>
       <path d={CLOUD} transform="translate(0 -3)" className="wx__fill" />
       <Face x={15.8} y={15.2} mood="sleepy" />
-      <path d="M6 24.5h8M17 24.5h9M9 28h10M22 28h3" />
+      <path className="wx__fog" d="M6 24.5h8M17 24.5h9M9 28h10M22 28h3" />
     </>
   ),
   stormy: (
     <>
       <path d={CLOUD} transform="translate(0 -4)" className="wx__fill" />
       <Face x={15.8} y={13.6} mood="worried" />
-      <path d="M17 20.2l-3.4 4.6h3l-2 4.2" />
-      <path d="M9 21.5l-1 2.2M23 21.5l-1 2.2M9.6 26l-.8 1.8" />
+      <path className="wx__bolt" d="M17 20.2l-3.4 4.6h3l-2 4.2" />
+      <path className="wx__rain" d="M9 21.5l-1 2.2M23 21.5l-1 2.2M9.6 26l-.8 1.8" />
     </>
   ),
 };
@@ -70,7 +72,7 @@ export default function WeatherIcon({ kind, size = 28, className = '' }) {
   if (!DRAW[kind]) return null;
   return (
     <svg
-      className={`wx ${className}`}
+      className={`wx wx--${kind} ${className}`}
       width={size}
       height={size}
       viewBox="0 0 32 32"

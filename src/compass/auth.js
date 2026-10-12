@@ -75,6 +75,34 @@ export async function deleteCloudState(userId) {
   if (error) throw error;
 }
 
+/** The trusted-person link for this user, or null. */
+export async function getShare(userId) {
+  const { data, error } = await supabase
+    .from('share_links').select('token, include_notes').eq('user_id', userId).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function createShare(userId, includeNotes) {
+  const { data, error } = await supabase
+    .from('share_links').insert({ user_id: userId, include_notes: includeNotes })
+    .select('token, include_notes').single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteShare(userId) {
+  const { error } = await supabase.from('share_links').delete().eq('user_id', userId);
+  if (error) throw error;
+}
+
+/** What a trusted person is allowed to see, by token. */
+export async function loadSharedSummary(token) {
+  const { data, error } = await supabase.rpc('get_shared_summary', { p_token: token });
+  if (error) throw error;
+  return data;
+}
+
 /** Plain-language errors, never raw codes. */
 export function friendly(err) {
   const m = String(err?.message || err || '').toLowerCase();

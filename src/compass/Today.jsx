@@ -86,6 +86,15 @@ function Daymark({ marked, onMark }) {
         )}
       </button>
       {!marked && <div className="daymark__hint">hold to mark the day</div>}
+      {!marked && (
+        <button
+          type="button"
+          className="margin-link daymark__alt"
+          onClick={() => { setSealed(true); onMark(); }}
+        >
+          or mark today with one tap
+        </button>
+      )}
     </div>
   );
 }
@@ -196,6 +205,10 @@ export default function Today({ state, actions }) {
         )}
 
         <div className="support-line">
+          <button className="margin-link" onClick={actions.openHardDay}>
+            Having a hard day?
+          </button>
+          <span aria-hidden="true"> · </span>
           <button className="margin-link" onClick={actions.openSupport}>
             Need support? →
           </button>

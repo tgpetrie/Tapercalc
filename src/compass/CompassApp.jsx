@@ -11,6 +11,9 @@ import Path from './Path.jsx';
 import MapTable from './MapTable.jsx';
 import Library from './Library.jsx';
 import Settings from './Settings.jsx';
+import HardDay from './HardDay.jsx';
+import SharedView from './SharedView.jsx';
+import './install.js';
 import Welcome from './Welcome.jsx';
 import Setup from './Setup.jsx';
 import {
@@ -39,6 +42,18 @@ function TodaySliver() {
   );
 }
 
+/** Text size is also kept on the device so the welcome page honors it before sign-in. */
+function applyTextSize(size) {
+  document.documentElement.dataset.text = size;
+  try { localStorage.setItem('compass.text.v1', size); } catch { /* ignore */ }
+}
+(function restoreTextSize() {
+  try {
+    const saved = localStorage.getItem('compass.text.v1');
+    if (saved) document.documentElement.dataset.text = saved;
+  } catch { /* ignore */ }
+})();
+
 /**
  * The route itself. `identity` is { kind: 'guest' | 'user', userId?, email? };
  * guests persist to this device, accounts to the cloud (debounced).
@@ -46,6 +61,7 @@ function TodaySliver() {
 function Compass({ initialState, identity, onAccount, onSignOut, onEraseAll }) {
   const [state, setState] = useState(initialState);
   const [syncError, setSyncError] = useState(false);
+  const [hardDayOpen, setHardDayOpen] = useState(false);
   const [tab, setTab] = useState('today');
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [librarySection, setLibrarySection] = useState(null);
@@ -65,6 +81,8 @@ function Compass({ initialState, identity, onAccount, onSignOut, onEraseAll }) {
   useEffect(() => {
     document.documentElement.dataset.theme = state.theme;
   }, [state.theme]);
+
+  useEffect(() => { applyTextSize(state.textSize || 'normal'); }, [state.textSize]);
 
   useEffect(() => {
     document.documentElement.dataset.mode = tab === 'plan' ? 'planning' : 'living';
@@ -92,6 +110,8 @@ function Compass({ initialState, identity, onAccount, onSignOut, onEraseAll }) {
     resumeRoute: () => setState(s => resumeRoute(s)),
     setReminderHour: (h) => setState(s => ({ ...s, reminderHour: h })),
     setTheme: (t) => setState(s => ({ ...s, theme: t })),
+    setTextSize: (t) => setState(s => ({ ...s, textSize: t })),
+    openHardDay: () => setHardDayOpen(true),
     openSupport: () => {
       setSettingsOpen(false);
       setLibrarySection('support');
@@ -100,7 +120,15 @@ function Compass({ initialState, identity, onAccount, onSignOut, onEraseAll }) {
   };
 
   let surface;
-  if (settingsOpen) {
+  if (hardDayOpen) {
+    surface = (
+      <HardDay
+        onClose={() => setHardDayOpen(false)}
+        onRead={() => { setHardDayOpen(false); setLibrarySection('waves'); setTab('library'); }}
+        onSupport={() => { setHardDayOpen(false); setLibrarySection('support'); setTab('library'); }}
+      />
+    );
+  } else if (settingsOpen) {
     surface = <Settings state={state} actions={actions} identity={identity} syncError={syncError}
         onAccount={onAccount} onSignOut={onSignOut} onEraseAll={onEraseAll}
         onClose={() => setSettingsOpen(false)} />;
@@ -131,7 +159,7 @@ function Compass({ initialState, identity, onAccount, onSignOut, onEraseAll }) {
         />
       )}
 
-      {!settingsOpen && (
+      {!settingsOpen && !hardDayOpen && (
         <nav className="tabbar" aria-label="Compass">
           {[['today', 'Today'], ['path', 'Path'], ['plan', 'Plan'], ['library', 'Library']].map(([id, label]) => (
             <button
@@ -160,7 +188,7 @@ function Compass({ initialState, identity, onAccount, onSignOut, onEraseAll }) {
  * whether this is a visitor (welcome), a new route (setup), or a returning
  * guest or account (their own record).
  */
-export default function CompassApp() {
+function CompassGate() {
   // phase: loading | welcome | recovery | setup | app
   const [phase, setPhase] = useState('loading');
   const [identity, setIdentity] = useState(null);
@@ -278,4 +306,10 @@ export default function CompassApp() {
       }}
     />
   );
+}
+
+export default function CompassApp() {
+  const token = new URLSearchParams(window.location.search).get('share');
+  if (token) return <SharedView token={token} />;
+  return <CompassGate />;
 }
