@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
-  loadState, saveState, markDay, setWeather, setNote, commitStrategy,
+  loadGuestState, saveGuestState, getGuestMode, setGuestMode, eraseGuest,
+  freshState, sampleState, markDay, setWeather, setNote, commitStrategy,
   claimMilestones, setMedication, setDoseSchedule, editOrigin,
   adjustDoseToday, addRestPoint, pauseRoute, resumeRoute,
 } from './model.js';
@@ -10,6 +11,11 @@ import Path from './Path.jsx';
 import MapTable from './MapTable.jsx';
 import Library from './Library.jsx';
 import Settings from './Settings.jsx';
+import Welcome from './Welcome.jsx';
+import Setup from './Setup.jsx';
+import {
+  getSession, onAuthChange, signOut, loadCloudState, saveCloudState, deleteCloudState,
+} from './auth.js';
 import './compass.css';
 
 /**
@@ -33,14 +39,28 @@ function TodaySliver() {
   );
 }
 
-export default function CompassApp() {
-  const [state, setState] = useState(loadState);
+/**
+ * The route itself. `identity` is { kind: 'guest' | 'user', userId?, email? };
+ * guests persist to this device, accounts to the cloud (debounced).
+ */
+function Compass({ initialState, identity, onAccount, onSignOut, onEraseAll }) {
+  const [state, setState] = useState(initialState);
+  const [syncError, setSyncError] = useState(false);
   const [tab, setTab] = useState('today');
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [librarySection, setLibrarySection] = useState(null);
   const [celebrating, setCelebrating] = useState(null);
 
-  useEffect(() => { saveState(state); }, [state]);
+  useEffect(() => {
+    if (identity.kind === 'sample') return undefined;   // a sample is never saved
+    if (identity.kind === 'guest') { saveGuestState(state); return undefined; }
+    const t = setTimeout(() => {
+      saveCloudState(identity.userId, state)
+        .then(() => setSyncError(false))
+        .catch(() => setSyncError(true));
+    }, 700);
+    return () => clearTimeout(t);
+  }, [state, identity]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = state.theme;
@@ -81,7 +101,9 @@ export default function CompassApp() {
 
   let surface;
   if (settingsOpen) {
-    surface = <Settings state={state} actions={actions} onClose={() => setSettingsOpen(false)} />;
+    surface = <Settings state={state} actions={actions} identity={identity} syncError={syncError}
+        onAccount={onAccount} onSignOut={onSignOut} onEraseAll={onEraseAll}
+        onClose={() => setSettingsOpen(false)} />;
   } else if (tab === 'today') {
     surface = (
       <>
@@ -130,5 +152,130 @@ export default function CompassApp() {
         </nav>
       )}
     </div>
+  );
+}
+
+/**
+ * The front door. Decides, before anything of anyone's route is shown,
+ * whether this is a visitor (welcome), a new route (setup), or a returning
+ * guest or account (their own record).
+ */
+export default function CompassApp() {
+  // phase: loading | welcome | recovery | setup | app
+  const [phase, setPhase] = useState('loading');
+  const [identity, setIdentity] = useState(null);
+  const [state, setState] = useState(null);
+  const [notice, setNotice] = useState('');
+
+  const enterGuest = (existing) => {
+    setGuestMode(true);
+    setIdentity({ kind: 'guest' });
+    const have = existing || loadGuestState();
+    if (have) { setState(have); setPhase('app'); } else { setPhase('setup'); }
+  };
+
+  const enterUser = async (session) => {
+    const user = { kind: 'user', userId: session.user.id, email: session.user.email };
+    try {
+      let cloud = await loadCloudState(user.userId);
+      if (!cloud) {
+        // First sign-in: bring a guest route along if there is one, else start fresh.
+        const guest = loadGuestState();
+        if (guest && !guest.sample) {
+          await saveCloudState(user.userId, guest);
+          eraseGuest();
+          cloud = guest;
+        }
+      }
+      setGuestMode(false);
+      setIdentity(user);
+      if (cloud) { setState(cloud); setPhase('app'); } else { setPhase('setup'); }
+    } catch {
+      setNotice('We couldn’t load your route just now. Check your connection and sign in again.');
+      await signOut();
+      setPhase('welcome');
+    }
+  };
+
+  useEffect(() => {
+    let alive = true;
+    let handled = null;
+    const take = (session) => {
+      if (!alive || !session || handled === session.user.id) return;
+      handled = session.user.id;
+      enterUser(session);
+    };
+    const off = onAuthChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') { handled = null; setPhase('recovery'); return; }
+      if (event === 'SIGNED_OUT') { handled = null; return; }
+      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') take(session);
+    });
+    getSession().then((session) => {
+      if (!alive) return;
+      if (session) take(session);
+      else if (getGuestMode()) enterGuest();
+      else setPhase('welcome');
+    });
+    return () => { alive = false; off(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!state) document.documentElement.dataset.theme = 'paper';
+  }, [state]);
+
+  const finishSetup = ({ medication, dose }) => {
+    const fresh = freshState({ medication, dose });
+    setState(fresh);
+    setPhase('app');
+  };
+
+  const leaveToWelcome = () => {
+    setGuestMode(false);
+    setState(null); setIdentity(null); setNotice('');
+    setPhase('welcome');
+  };
+
+  if (phase === 'loading') return <div className="compass" aria-busy="true" />;
+
+  if (phase === 'recovery') {
+    return <div className="compass"><Welcome initialMode="reset" /></div>;
+  }
+
+  if (phase === 'welcome') {
+    return (
+      <div className="compass">
+        <Welcome
+          notice={notice}
+          onGuest={() => enterGuest()}
+          onSample={() => {
+            setGuestMode(false);
+            setIdentity({ kind: 'sample' });
+            setState(sampleState());
+            setPhase('app');
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (phase === 'setup') {
+    return <div className="compass"><Setup identity={identity.kind} onDone={finishSetup} /></div>;
+  }
+
+  // A sample route is never saved anywhere; leaving it returns to the welcome page.
+  return (
+    <Compass
+      key={identity.userId || identity.kind}
+      initialState={state}
+      identity={identity}
+      onAccount={leaveToWelcome}
+      onSignOut={async () => { await signOut(); leaveToWelcome(); }}
+      onEraseAll={async () => {
+        if (identity.kind === 'user') { try { await deleteCloudState(identity.userId); } catch { /* shown by reload */ } }
+        eraseGuest();
+        window.location.reload();
+      }}
+    />
   );
 }

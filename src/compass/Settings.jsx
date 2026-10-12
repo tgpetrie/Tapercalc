@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { daysWalked, fmtDose, currentDose, exportEverything, eraseAll } from './model.js';
+import { daysWalked, fmtDose, currentDose, exportEverything } from './model.js';
 
 /**
  * Settings — a door, not a destination. One flat list.
  * Data dignity is a headline here, not fine print.
  */
 
-export default function Settings({ state, actions, onClose }) {
+export default function Settings({ state, actions, identity, syncError, onAccount, onSignOut, onEraseAll, onClose }) {
   const [confirmErase, setConfirmErase] = useState(false);
   const walked = daysWalked(state);
 
@@ -14,6 +14,32 @@ export default function Settings({ state, actions, onClose }) {
     <div className="page settings">
       <button className="back-link" onClick={onClose}>← back</button>
       <h1>Settings</h1>
+
+      <div className="settings__row">
+        <span className="settings__label">Account</span>
+        {identity.kind === 'user' ? (
+          <span className="settings__value" style={{ display: 'flex', gap: '0.8rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            {identity.email}
+            <button className="door" onClick={onSignOut}>sign out</button>
+          </span>
+        ) : identity.kind === 'sample' ? (
+          <span className="settings__value" style={{ display: 'flex', gap: '0.8rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            sample route — nothing here is saved
+            <button className="door" onClick={onAccount}>leave sample</button>
+          </span>
+        ) : (
+          <span className="settings__value" style={{ display: 'flex', gap: '0.8rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            guest — saved on this device only
+            <button className="door" onClick={onAccount}>create account or sign in</button>
+          </span>
+        )}
+      </div>
+
+      {syncError && (
+        <p className="settings__value" role="alert" style={{ margin: '0.4rem 0 0.8rem' }}>
+          Your latest changes haven’t reached your account yet. They’ll keep trying while this page is open.
+        </p>
+      )}
 
       <div className="settings__row">
         <span className="settings__label">Your record, yours — export everything</span>
@@ -27,7 +53,7 @@ export default function Settings({ state, actions, onClose }) {
         {confirmErase ? (
           <span style={{ display: 'flex', gap: '0.6rem' }}>
             <button className="door" onClick={() => setConfirmErase(false)}>keep my record</button>
-            <button className="door" onClick={() => { eraseAll(); window.location.reload(); }}>
+            <button className="door" onClick={onEraseAll}>
               erase
             </button>
           </span>

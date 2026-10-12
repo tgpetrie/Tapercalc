@@ -23,7 +23,8 @@ export const DIALS = {
   ARRIVAL_DOSE: 0.15,            // mg below which we consider the descent arrived
 };
 
-const STORAGE_KEY = 'compass.route.v1';
+const STORAGE_KEY = 'compass.guest.v2';   // guests only; accounts live in the cloud
+const MODE_KEY = 'compass.mode.v2';
 const MS_DAY = 24 * 60 * 60 * 1000;
 
 // ── Dates ───────────────────────────────────────────────────────────────────
@@ -130,7 +131,30 @@ function seedState() {
     // milestones already honored along the way; walked-200 is close —
     // the demo's next mark will bring it
     celebrated: ['walked-30', 'walked-100', 'descent-75'],
+    sample: true,
   };
+}
+
+/** A new, empty route: the person's own medication and dose, set out today. */
+export function freshState({ medication, dose, startDate = todayISO() }) {
+  return migrate({
+    version: 1,
+    medication: medication || 'Medication',
+    unit: 'mg',
+    startDate,
+    events: [{ day: 1, date: startDate, dose, kind: 'start', note: `Set out at ${fmtDose(dose)}.` }],
+    journal: {},
+    strategy: { id: 'hyperbolic', percent: 9, intervalDays: 21 },
+    reminderHour: 20,
+    theme: 'paper',
+    routeHistory: [],
+    celebrated: [],
+  });
+}
+
+/** The old demo route, offered only when someone asks to look around. */
+export function sampleState() {
+  return migrate(seedState());
 }
 
 // ── Persistence ─────────────────────────────────────────────────────────────
@@ -139,7 +163,7 @@ function seedState() {
  * Older saved states predate the route builder. Fill in what's missing
  * without touching anything the user already wrote.
  */
-function migrate(state) {
+export function migrate(state) {
   const s = { ...state };
   s.strategy = normalizeStrategy(s.strategy);
   if (!s.doseSchedule) s.doseSchedule = ['morning'];
@@ -150,24 +174,37 @@ function migrate(state) {
   return s;
 }
 
-export function loadState() {
+/** Guest record on this device, or null if there isn't one. */
+export function loadGuestState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return migrate(JSON.parse(raw));
-  } catch { /* fall through to a fresh seed */ }
-  const state = seedState();
-  saveState(state);
-  return migrate(state);
+  } catch { /* storage unavailable or unreadable */ }
+  return null;
 }
 
-export function saveState(state) {
+export function saveGuestState(state) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch { /* storage unavailable — Compass still works for the session */ }
 }
 
-export function eraseAll() {
-  localStorage.removeItem(STORAGE_KEY);
+export function getGuestMode() {
+  try { return localStorage.getItem(MODE_KEY) === 'guest'; } catch { return false; }
+}
+
+export function setGuestMode(on) {
+  try {
+    if (on) localStorage.setItem(MODE_KEY, 'guest');
+    else localStorage.removeItem(MODE_KEY);
+  } catch { /* ignore */ }
+}
+
+export function eraseGuest() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(MODE_KEY);
+  } catch { /* ignore */ }
 }
 
 // ── Derived: where am I? ────────────────────────────────────────────────────
