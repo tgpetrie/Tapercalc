@@ -1455,3 +1455,9 @@ html[data-text=larger] .tabbar .tabbar__settings { padding: 0.45rem 0.5rem; }
 }
 .appbar__account:hover { border-color: var(--pencil); }
 @media print { .appbar { display: none; } }
+
+/* ── Setup: support notices ── */
+.setup__notice { border: 1px solid var(--hairline); border-left: 3px solid var(--accent); background: var(--paper-raised); padding: 0.9rem 1rem; border-radius: 4px; }
+.setup__notice p { margin: 0 0 0.6rem; line-height: 1.5; }
+.setup__notice p:last-child { margin-bottom: 0; }
+.setup__notice a { color: inherit; text-decoration: underline; }

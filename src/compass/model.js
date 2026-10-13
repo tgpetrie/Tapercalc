@@ -136,9 +136,10 @@ function seedState() {
 }
 
 /** A new, empty route: the person's own medication and dose, set out today. */
-export function freshState({ medication, dose, startDate = todayISO(), doseSchedule = ['morning'], routePlanned = false, strategy = null }) {
+export function freshState({ medication, dose, startDate = todayISO(), doseSchedule = ['morning'], routePlanned = false, strategy = null, drugClass = null }) {
   return migrate({
     doseSchedule,
+    drugClass,
     routePlanned,
     version: 1,
     medication: medication || 'Medication',
