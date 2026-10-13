@@ -118,6 +118,8 @@ function CurrentRoute({ state, actions }) {
     nextLine = `Paused since ${prettyDate(state.pausedSince)}. The road ahead waits — your days still count.`;
   } else if (hold) {
     nextLine = `Resting until ${prettyDate(hold.endsOn)} — part of the route.`;
+  } else if (state.routePlanned === false) {
+    nextLine = 'No changes planned — you are keeping a record. Draw a draft below whenever you want to talk one over with your prescriber.';
   } else if (next) {
     nextLine = `Next step: ${fmtDose(next.dose)} on ${prettyDate(next.date)}.`;
   } else {
@@ -131,12 +133,14 @@ function CurrentRoute({ state, actions }) {
         <div className="route-card__dose">{fmtDose(dose)} today</div>
         <div className="route-card__meta">
           {state.medication} · set out at {fmtDose(origin?.dose)} on {prettyDate(state.startDate)}
-          {strat.targetDose > 0 ? ` · headed for ${fmtDose(strat.targetDose)}` : ' · headed for zero'}
+          {state.routePlanned === false ? '' : strat.targetDose > 0 ? ` · headed for ${fmtDose(strat.targetDose)}` : ' · headed for zero'}
           {parts.length > 1 && ` · taken ${parts.map(p => `${fmtDose(p.mg)} ${p.label}`).join(', ')}`}
         </div>
-        <p className="route-card__shape">
-          {shapeSentence(strat)} {paceSentence(state, strat)} {restSentence(strat)}
-        </p>
+        {state.routePlanned !== false && (
+          <p className="route-card__shape">
+            {shapeSentence(strat)} {paceSentence(state, strat)} {restSentence(strat)}
+          </p>
+        )}
         <p className="route-card__next">
           {nextLine}
           {!state.pausedSince && future.arrivalISO && ` Arrival ${arrivalWord(future)}, at this pace.`}
@@ -144,7 +148,7 @@ function CurrentRoute({ state, actions }) {
         </p>
         <p className="route-card__keep">Past days are preserved. Changes only redraw the road ahead.</p>
         <div className="route-card__tools">
-          {state.pausedSince ? (
+          {state.routePlanned === false ? null : state.pausedSince ? (
             <button className="margin-link" onClick={actions.resumeRoute}>
               resume the route — the pencil redraws from today
             </button>

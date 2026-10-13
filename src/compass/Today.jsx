@@ -17,8 +17,10 @@ function composeSentence(state) {
   const hold = activeHold(state);
   const next = nextChange(state);
 
+  const firstDay = dayNumber(state) === 1;
   const doseLine =
-    hour < 12 ? `${fmtDose(dose)} this morning.` : `${fmtDose(dose)}, same as yesterday.`;
+    firstDay ? `${fmtDose(dose)} today.`
+    : hour < 12 ? `${fmtDose(dose)} this morning.` : `${fmtDose(dose)}, same as yesterday.`;
 
   let phaseLine = '';
   if (state.pausedSince) {
@@ -31,6 +33,8 @@ function composeSentence(state) {
       inDays <= 0 ? `Today is a step day — down to ${fmtDose(next.dose)}.`
       : inDays <= 3 ? `A step down is coming ${weekdayName(next.date)}.`
       : `Steady until ${prettyDate(next.date)}, then ${fmtDose(next.dose)}.`;
+  } else if (state.routePlanned === false) {
+    phaseLine = 'Keeping a record. No changes are planned.';
   } else {
     phaseLine = 'Steady. Nothing changes today.';
   }

@@ -136,8 +136,10 @@ function seedState() {
 }
 
 /** A new, empty route: the person's own medication and dose, set out today. */
-export function freshState({ medication, dose, startDate = todayISO() }) {
+export function freshState({ medication, dose, startDate = todayISO(), doseSchedule = ['morning'], routePlanned = false }) {
   return migrate({
+    doseSchedule,
+    routePlanned,
     version: 1,
     medication: medication || 'Medication',
     unit: 'mg',
@@ -171,6 +173,8 @@ export function migrate(state) {
   if (!s.celebrated) s.celebrated = [];
   if (!s.medication) s.medication = 'Medication';
   if (s.pausedSince === undefined) s.pausedSince = null;
+  // older records were all drawn routes; only a new record-only start is false
+  if (s.routePlanned === undefined) s.routePlanned = true;
   return s;
 }
 
@@ -252,6 +256,14 @@ export function projectFuture(state, fromISO = todayISO(), strategyOverride = nu
     return {
       steps: [], arrivalISO: null, projectionStart,
       reductionsRemaining: 0, horizonExceeded: false, paused: true,
+    };
+  }
+
+  // record-only: nothing is planned, so nothing is drawn. drafts still project.
+  if (state.routePlanned === false && !strategyOverride) {
+    return {
+      steps: [], arrivalISO: null, projectionStart,
+      reductionsRemaining: 0, horizonExceeded: false, recording: true,
     };
   }
 
@@ -459,6 +471,7 @@ export function commitStrategy(state, strategy) {
       { retiredOn: todayISO(), strategy: state.strategy },
     ],
     strategy,
+    routePlanned: true,
   };
 }
 

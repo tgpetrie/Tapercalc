@@ -252,8 +252,8 @@ function CompassGate() {
     if (!state) document.documentElement.dataset.theme = 'paper';
   }, [state]);
 
-  const finishSetup = ({ medication, dose }) => {
-    const fresh = freshState({ medication, dose });
+  const finishSetup = (answers) => {
+    const fresh = freshState(answers);
     setState(fresh);
     setPhase('app');
   };

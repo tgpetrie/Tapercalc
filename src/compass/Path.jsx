@@ -39,6 +39,9 @@ function captionFor(state, g, day) {
   for (const s of g.future.steps) {
     if (g.isoToDay(s.date) <= day) dose = s.dose;
   }
+  if (state.routePlanned === false) {
+    return { date: `${prettyDate(iso)} · ahead`, text: 'No changes planned. You are keeping a record.' };
+  }
   return {
     date: `Around ${prettyDate(iso)} · pencil`,
     text: `${fmtDose(dose)}, if the current pace holds. Nothing here is fixed.`,
