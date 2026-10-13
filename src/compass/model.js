@@ -136,7 +136,7 @@ function seedState() {
 }
 
 /** A new, empty route: the person's own medication and dose, set out today. */
-export function freshState({ medication, dose, startDate = todayISO(), doseSchedule = ['morning'], routePlanned = false }) {
+export function freshState({ medication, dose, startDate = todayISO(), doseSchedule = ['morning'], routePlanned = false, strategy = null }) {
   return migrate({
     doseSchedule,
     routePlanned,
@@ -146,7 +146,7 @@ export function freshState({ medication, dose, startDate = todayISO(), doseSched
     startDate,
     events: [{ day: 1, date: startDate, dose, kind: 'start', note: `Set out at ${fmtDose(dose)}.` }],
     journal: {},
-    strategy: { id: 'hyperbolic', percent: 9, intervalDays: 21 },
+    strategy: strategy || { id: 'hyperbolic', percent: 9, intervalDays: 21 },
     reminderHour: 20,
     theme: 'paper',
     routeHistory: [],

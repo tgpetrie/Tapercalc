@@ -1419,3 +1419,10 @@ html[data-text=larger] .tabbar .tabbar__settings { padding: 0.45rem 0.5rem; }
 .welcome__choices label.is-picked { border-color: var(--ink); background: var(--paper-raised); }
 .welcome__choices input { margin-top: 0.25rem; accent-color: var(--accent); flex: none; }
 .welcome__choices strong { color: var(--ink); font-weight: 600; }
+
+.welcome__choices em { display: block; font-style: normal; margin-top: 0.2rem; font-size: 0.88rem; line-height: 1.5; color: var(--ink-faint); }
+.welcome__choices .choice__line { color: var(--ink-soft); }
+.welcome__choices .choice__figures { display: block; margin-top: 0.35rem; font-size: 0.88rem; color: var(--accent); }
+.welcome__choices .choice__source { display: inline-block; margin-top: 0.35rem; font-size: 0.82rem; color: var(--ink-faint); text-decoration: underline; text-decoration-color: var(--hairline); text-underline-offset: 0.2em; }
+.welcome__choices .choice__source:hover { color: var(--ink); }
+.welcome__fine--plain { margin: 0; font-size: 0.84rem; line-height: 1.55; color: var(--ink-faint); }
