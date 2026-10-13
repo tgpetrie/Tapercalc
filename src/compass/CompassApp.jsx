@@ -12,6 +12,7 @@ import MapTable from './MapTable.jsx';
 import Library from './Library.jsx';
 import Settings from './Settings.jsx';
 import HardDay from './HardDay.jsx';
+import Logo from './Logo.jsx';
 import SharedView from './SharedView.jsx';
 import './install.js';
 import Welcome from './Welcome.jsx';
@@ -58,7 +59,7 @@ function applyTextSize(size) {
  * The route itself. `identity` is { kind: 'guest' | 'user', userId?, email? };
  * guests persist to this device, accounts to the cloud (debounced).
  */
-function Compass({ initialState, identity, onAccount, onSignOut, onEraseAll }) {
+function Compass({ initialState, identity, onAccount, onSignOut, onEraseAll, onHome, onSignIn }) {
   const [state, setState] = useState(initialState);
   const [syncError, setSyncError] = useState(false);
   const [hardDayOpen, setHardDayOpen] = useState(false);
@@ -83,6 +84,9 @@ function Compass({ initialState, identity, onAccount, onSignOut, onEraseAll }) {
   }, [state.theme]);
 
   useEffect(() => { applyTextSize(state.textSize || 'normal'); }, [state.textSize]);
+
+  // each screen starts at its top
+  useEffect(() => { window.scrollTo(0, 0); }, [tab, settingsOpen, hardDayOpen]);
 
   useEffect(() => {
     document.documentElement.dataset.mode = tab === 'plan' ? 'planning' : 'living';
@@ -149,6 +153,22 @@ function Compass({ initialState, identity, onAccount, onSignOut, onEraseAll }) {
 
   return (
     <div className="compass">
+      <header className="appbar">
+        <button className="appbar__home" onClick={onHome} aria-label="Compass home">
+          <Logo size={30} />
+          <span>Compass</span>
+        </button>
+        {identity.kind === 'user' ? (
+          <button className="appbar__account" onClick={() => setSettingsOpen(true)} aria-label="Account and settings">
+            {(identity.email || '?').slice(0, 1).toUpperCase()}
+          </button>
+        ) : (
+          <button className="appbar__signin" onClick={onSignIn}>
+            {identity.kind === 'sample' ? 'Leave sample' : 'Sign in'}
+          </button>
+        )}
+      </header>
+
       {surface}
 
       {celebrating && (
@@ -194,6 +214,7 @@ function CompassGate() {
   const [identity, setIdentity] = useState(null);
   const [state, setState] = useState(null);
   const [notice, setNotice] = useState('');
+  const [welcomeMode, setWelcomeMode] = useState('home');
 
   const enterGuest = (existing) => {
     setGuestMode(true);
@@ -252,17 +273,30 @@ function CompassGate() {
     if (!state) document.documentElement.dataset.theme = 'paper';
   }, [state]);
 
+  useEffect(() => { window.scrollTo(0, 0); }, [phase, welcomeMode]);
+
   const finishSetup = (answers) => {
     const fresh = freshState(answers);
     setState(fresh);
     setPhase('app');
   };
 
+  // Back to the front door without losing the route in memory: "Continue" returns to it.
+  const goHome = (mode = 'home') => {
+    setNotice('');
+    setWelcomeMode(mode);
+    setPhase('welcome');
+  };
+
+  // Leaving for good (sign out, leave a sample): the route is let go of.
   const leaveToWelcome = () => {
     setGuestMode(false);
     setState(null); setIdentity(null); setNotice('');
+    setWelcomeMode('home');
     setPhase('welcome');
   };
+
+  const resumeKind = state && identity && identity.kind !== 'sample' ? identity.kind : null;
 
   if (phase === 'loading') return <div className="compass" aria-busy="true" />;
 
@@ -274,8 +308,12 @@ function CompassGate() {
     return (
       <div className="compass">
         <Welcome
+          key={welcomeMode + (resumeKind || '')}
+          initialMode={welcomeMode}
+          resume={resumeKind}
+          onResume={() => setPhase('app')}
           notice={notice}
-          onGuest={() => enterGuest()}
+          onGuest={() => enterGuest(resumeKind === 'guest' ? state : undefined)}
           onSample={() => {
             setGuestMode(false);
             setIdentity({ kind: 'sample' });
@@ -297,7 +335,9 @@ function CompassGate() {
       key={identity.userId || identity.kind}
       initialState={state}
       identity={identity}
-      onAccount={leaveToWelcome}
+      onAccount={() => goHome('signin')}
+      onHome={() => goHome('home')}
+      onSignIn={() => (identity.kind === 'sample' ? leaveToWelcome() : goHome('signin'))}
       onSignOut={async () => { await signOut(); leaveToWelcome(); }}
       onEraseAll={async () => {
         if (identity.kind === 'user') { try { await deleteCloudState(identity.userId); } catch { /* shown by reload */ } }

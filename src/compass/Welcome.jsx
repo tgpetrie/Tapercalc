@@ -14,7 +14,7 @@ const COPY = {
   reset: { title: 'Choose a new password', cta: 'Save password' },
 };
 
-export default function Welcome({ initialMode = 'home', onGuest, onSample, notice }) {
+export default function Welcome({ initialMode = 'home', resume = null, onResume, onGuest, onSample, notice }) {
   const [mode, setMode] = useState(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -67,9 +67,23 @@ export default function Welcome({ initialMode = 'home', onGuest, onSample, notic
         </section>
 
         <div className="welcome__actions">
-          <button className="door door--primary" onClick={() => go('signup')}>Create an account</button>
-          <button className="door" onClick={() => go('signin')}>Sign in</button>
-          <button className="welcome__guest" onClick={onGuest}>Continue as a guest</button>
+          {resume ? (
+            <>
+              <button className="door door--primary" onClick={onResume}>Continue your route</button>
+              {resume === 'guest' && (
+                <>
+                  <button className="door" onClick={() => go('signup')}>Create an account</button>
+                  <button className="welcome__guest" onClick={() => go('signin')}>Sign in</button>
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              <button className="door door--primary" onClick={() => go('signup')}>Create an account</button>
+              <button className="door" onClick={() => go('signin')}>Sign in</button>
+              <button className="welcome__guest" onClick={onGuest}>Continue as a guest</button>
+            </>
+          )}
         </div>
 
         <footer className="welcome__fine">
@@ -81,7 +95,7 @@ export default function Welcome({ initialMode = 'home', onGuest, onSample, notic
             Compass is a record and a planning aid, not medical advice. Decide changes to a
             taper with your prescriber or care team.
           </p>
-          {onSample && (
+          {onSample && !resume && (
             <button className="welcome__sample" onClick={onSample}>Look around with a sample route</button>
           )}
         </footer>
@@ -137,7 +151,7 @@ export default function Welcome({ initialMode = 'home', onGuest, onSample, notic
         )}
         {mode === 'signup' && <button onClick={() => go('signin')}>Already have an account? Sign in</button>}
         {mode === 'forgot' && <button onClick={() => go('signin')}>Back to sign in</button>}
-        {mode !== 'reset' && <button onClick={onGuest}>Or continue as a guest</button>}
+        {mode !== 'reset' && (resume === 'user' ? null : <button onClick={resume === 'guest' ? onResume : onGuest}>{resume === 'guest' ? 'Back to your route' : 'Or continue as a guest'}</button>)}
       </div>
     </main>
   );
